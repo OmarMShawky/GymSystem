@@ -1,0 +1,14 @@
+﻿using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GymSystem.DataAccess.Entities;
+
+public class Category : BaseEntity
+{
+    public string Name { get; set; } = null!;
+    //public ICollection<Session> MyProperty { get; set; }
+}
