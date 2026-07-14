@@ -1,4 +1,5 @@
 ﻿using GymSystem.DataAccess.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
 using System.Collections.Generic;
@@ -8,11 +9,10 @@ using System.Threading.Tasks;
 
 namespace GymSystem.DataAccess.Data.Configurations;
 
-public class TrainerConfiguration : UserConfiguration<Trainer>
+public class TrainerConfiguration : IEntityTypeConfiguration<Trainer>
 {
-    public override void Configure(EntityTypeBuilder<Trainer> builder)
+    public void Configure(EntityTypeBuilder<Trainer> builder)
     {
-        base.Configure(builder);
 
         builder.Property(p => p.Specialty)
                .HasConversion<string>()

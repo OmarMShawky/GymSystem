@@ -5,6 +5,9 @@ namespace GymSystem.DataAccess.Data;
 
 public class GymDbContext : DbContext
 {
+    public GymDbContext(DbContextOptions<GymDbContext> options) : base(options)
+    {
+    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GymDbContext).Assembly);

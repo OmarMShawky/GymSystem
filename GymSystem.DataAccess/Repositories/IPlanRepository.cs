@@ -2,12 +2,12 @@
 
 namespace GymSystem.DataAccess.Repositories;
 
-public interface IPlanRepository
+public interface IPlansRepository
 {
-    Task<IEnumerable<Plan>> GetAllAsync();
-    Task<Plan?> GetByIdAsync(int id);
-    void Add(Plan plan);
-    void Update(Plan plan);
-    void Delete(Plan plan);
+    Task<IEnumerable<Plan>> GetAllAsync(bool trackChanges = false, CancellationToken cancellationToken = default);
+    Task<Plan?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task AddAsync(Plan plan, CancellationToken cancellationToken = default);
+    void Update(Plan plan, CancellationToken cancellationToken = default);
+    void Delete(Plan plan, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync();
 }

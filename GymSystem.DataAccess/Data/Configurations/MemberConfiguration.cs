@@ -9,13 +9,11 @@ using System.Threading.Tasks;
 
 namespace GymSystem.DataAccess.Data.Configurations;
 
-public class MemberConfiguration : UserConfiguration<Member>
+public class MemberConfiguration : IEntityTypeConfiguration<Member>
 {
-    public override void Configure(EntityTypeBuilder<Member> builder)
+    public void Configure(EntityTypeBuilder<Member> builder)
     {
-        base.Configure(builder);
-
-        builder.Property(p => p.Phone)
+        builder.Property(m => m.Phone)
                .HasMaxLength(500);
     }
 }
