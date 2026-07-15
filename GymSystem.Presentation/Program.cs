@@ -2,11 +2,18 @@ using GymSystem.DataAccess.Repositories;
 using GymSystem.DataAccess.Data.Seed;
 using GymSystem.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using GymSystem.BusinessLogic.Services;
+using GymSystem.DataAccess.Contracts;
+using GymSystem.DataAccess.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddScoped<IPlanRepository, PlanRepository>();
+
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+builder.Services.AddScoped<IPlansService, PlansService>();
+
 builder.Services.AddDbContext<GymDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));

@@ -10,10 +10,12 @@ public class Member : User
 {
     public string? Photo { get; set; }
     public DateTime JoinDate { get; set; }
-
+    public ICollection<Membership> MemberPlans { get; set; } = [];
+    public ICollection<Booking> MemberSessions { get; set; } = [];
     public HealthRecord HealthRecord { get; set; } = null!;
+
+}
 
     // ICollection<Booking>
 
     // ICollection<MemeberShip>
-}

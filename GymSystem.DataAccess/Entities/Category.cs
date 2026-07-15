@@ -10,5 +10,7 @@ namespace GymSystem.DataAccess.Entities;
 public class Category : BaseEntity
 {
     public string Name { get; set; } = null!;
-    //public ICollection<Session> MyProperty { get; set; }
+    public string Description { get; set; } = null!;
+
+    public ICollection<Session> Sessions { get; set; } = [];
 }

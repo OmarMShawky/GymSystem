@@ -1,28 +1,50 @@
 ﻿using GymSystem.DataAccess.Data;
+using GymSystem.DataAccess.Contracts;
 using GymSystem.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace GymSystem.DataAccess.Repositories;
 
-public class PlanRepository : IPlanRepository
+public class PlansRepository : IGenericRepository<Plan>
 {
-    public GymDbContext dbContext = new GymDbContext();
+    private readonly GymDbContext _context;
 
-    public async Task<IEnumerable<Plan>> GetAllAsync()
-        => await dbContext.Plans.ToListAsync();
+    public PlansRepository(GymDbContext context)
+    {
+        _context = context;
+    }
 
-    public async Task<Plan?> GetByIdAsync(int id)
-        => await dbContext.Plans.FirstOrDefaultAsync(p => p.Id == id);
-    public void Add(Plan plan)
-        => dbContext.Add(plan);
+    //Get All Plans
+    public async Task<IEnumerable<Plan>> GetAllAsync(bool trackChanges = false, CancellationToken cancellationToken = default)
+        => trackChanges ? await _context.Plans.ToListAsync(cancellationToken)
+         : await _context.Plans.AsNoTracking().ToListAsync(cancellationToken);
 
-    public void Update(Plan plan)
-        => dbContext.Update(plan);
+    //Get Plan By Id
+    public async Task<Plan?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        => await _context.Plans.FindAsync([id], cancellationToken);
 
-    public void Delete(Plan plan)
-        => dbContext.Remove(plan);
+
+    public async Task AddAsync(Plan plan, CancellationToken cancellationToken = default)
+    {
+        _context.Plans.Add(plan);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateAsync(Plan plan, CancellationToken cancellationToken = default)
+    {
+        _context.Plans.Update(plan);
+        await _context.SaveChangesAsync();
+        
+    }
+
+    public async Task DeleteAsync(Plan plan, CancellationToken cancellationToken = default)
+      {
+        _context.Plans.Remove(plan);
+        await _context.SaveChangesAsync();
+        
+    }
 
     public async Task<int> SaveChangesAsync()
-        => await dbContext.SaveChangesAsync();
+        => await _context.SaveChangesAsync();
 
 }

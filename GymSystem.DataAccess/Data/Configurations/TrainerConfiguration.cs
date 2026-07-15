@@ -1,21 +1,13 @@
-﻿using GymSystem.DataAccess.Entities;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace GymSystem.DataAccess.Data.Configurations;
 
-namespace GymSystem.DataAccess.Data.Configurations;
-
-public class TrainerConfiguration : UserConfiguration<Trainer>
+public class TrainerConfiguration : UserConfiguration<Trainer>, IEntityTypeConfiguration<Trainer>
 {
-    public override void Configure(EntityTypeBuilder<Trainer> builder)
+    public new void Configure(EntityTypeBuilder<Trainer> builder)
     {
-        base.Configure(builder);
-
-        builder.Property(p => p.Specialty)
+        builder.Property(t => t.Specialty)
                .HasConversion<string>()
                .HasMaxLength(30);
+
+        base.Configure(builder);
     }
 }
