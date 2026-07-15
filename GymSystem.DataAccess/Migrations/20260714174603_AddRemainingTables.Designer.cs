@@ -4,6 +4,7 @@ using GymSystem.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GymSystem.Migrations
 {
     [DbContext(typeof(GymDbContext))]
-    partial class GymDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714174603_AddRemainingTables")]
+    partial class AddRemainingTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,44 +24,6 @@ namespace GymSystem.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("GymSystem.DataAccess.Entities.Booking", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsAttended")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("MemberId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SessionId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MemberId");
-
-                    b.HasIndex("SessionId");
-
-                    b.ToTable("Bookings");
-                });
 
             modelBuilder.Entity("GymSystem.DataAccess.Entities.Category", b =>
                 {
@@ -215,44 +180,6 @@ namespace GymSystem.Migrations
                         });
                 });
 
-            modelBuilder.Entity("GymSystem.DataAccess.Entities.Membership", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("MemberId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PlanId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MemberId");
-
-                    b.HasIndex("PlanId");
-
-                    b.ToTable("Memberships");
-                });
-
             modelBuilder.Entity("GymSystem.DataAccess.Entities.Plan", b =>
                 {
                     b.Property<int>("Id")
@@ -315,9 +242,6 @@ namespace GymSystem.Migrations
                     b.Property<int>("Capacity")
                         .HasColumnType("int");
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -337,17 +261,10 @@ namespace GymSystem.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("TrainerId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("TrainerId");
 
                     b.ToTable("Sessions", t =>
                         {
@@ -424,25 +341,6 @@ namespace GymSystem.Migrations
                         });
                 });
 
-            modelBuilder.Entity("GymSystem.DataAccess.Entities.Booking", b =>
-                {
-                    b.HasOne("GymSystem.DataAccess.Entities.Member", "Member")
-                        .WithMany("MemberSessions")
-                        .HasForeignKey("MemberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GymSystem.DataAccess.Entities.Session", "Session")
-                        .WithMany("SessionMembers")
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Member");
-
-                    b.Navigation("Session");
-                });
-
             modelBuilder.Entity("GymSystem.DataAccess.Entities.HealthRecord", b =>
                 {
                     b.HasOne("GymSystem.DataAccess.Entities.Member", "Member")
@@ -489,44 +387,6 @@ namespace GymSystem.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GymSystem.DataAccess.Entities.Membership", b =>
-                {
-                    b.HasOne("GymSystem.DataAccess.Entities.Member", "Menber")
-                        .WithMany("MemberPlans")
-                        .HasForeignKey("MemberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GymSystem.DataAccess.Entities.Plan", "Plan")
-                        .WithMany("PlanMembers")
-                        .HasForeignKey("PlanId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Menber");
-
-                    b.Navigation("Plan");
-                });
-
-            modelBuilder.Entity("GymSystem.DataAccess.Entities.Session", b =>
-                {
-                    b.HasOne("GymSystem.DataAccess.Entities.Category", "Category")
-                        .WithMany("Sessions")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GymSystem.DataAccess.Entities.Trainer", "Trainer")
-                        .WithMany("Sessions")
-                        .HasForeignKey("TrainerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Trainer");
-                });
-
             modelBuilder.Entity("GymSystem.DataAccess.Entities.Trainer", b =>
                 {
                     b.OwnsOne("GymSystem.DataAccess.Entities.ValueObjects.Address", "Address", b1 =>
@@ -562,34 +422,10 @@ namespace GymSystem.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GymSystem.DataAccess.Entities.Category", b =>
-                {
-                    b.Navigation("Sessions");
-                });
-
             modelBuilder.Entity("GymSystem.DataAccess.Entities.Member", b =>
                 {
                     b.Navigation("HealthRecord")
                         .IsRequired();
-
-                    b.Navigation("MemberPlans");
-
-                    b.Navigation("MemberSessions");
-                });
-
-            modelBuilder.Entity("GymSystem.DataAccess.Entities.Plan", b =>
-                {
-                    b.Navigation("PlanMembers");
-                });
-
-            modelBuilder.Entity("GymSystem.DataAccess.Entities.Session", b =>
-                {
-                    b.Navigation("SessionMembers");
-                });
-
-            modelBuilder.Entity("GymSystem.DataAccess.Entities.Trainer", b =>
-                {
-                    b.Navigation("Sessions");
                 });
 #pragma warning restore 612, 618
         }

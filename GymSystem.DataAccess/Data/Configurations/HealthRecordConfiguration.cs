@@ -1,31 +1,25 @@
-﻿using GymSystem.DataAccess.Entities;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GymSystem.DataAccess.Data.Configurations;
+﻿namespace GymSystem.DataAccess.Data.Configurations;
 
 public class HealthRecordConfiguration : IEntityTypeConfiguration<HealthRecord>
 {
     public void Configure(EntityTypeBuilder<HealthRecord> builder)
     {
-        builder.Property(c => c.Weight)
+        builder.Property(h => h.Weight)
                .HasPrecision(3, 2);
 
-        builder.Property(c => c.Height)
+        builder.Property(h => h.Height)
                .HasPrecision(3, 2);
 
-        builder.Property(c => c.BloodType)
+        builder.Property(h => h.BloodType)
                .HasConversion<string>()
                .HasMaxLength(20);
 
-        builder.HasOne(m => m.Member)
-               .WithOne(m => m.HealthRecord)
-               .HasForeignKey<HealthRecord>(m => m.MemberId)
+        builder.Property(h => h.Notes)
+               .HasMaxLength(100);
+
+        builder.HasOne(h => h.Member)
+               .WithOne(h => h.HealthRecord)
+               .HasForeignKey<HealthRecord>(h => h.MemberId)
                .OnDelete(DeleteBehavior.Cascade);
 
         builder.ToTable(tb =>

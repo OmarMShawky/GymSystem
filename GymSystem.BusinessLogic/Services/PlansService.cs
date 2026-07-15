@@ -1,13 +1,15 @@
-﻿using GymSystem.DataAccess.Repositories;
+﻿using GymSystem.DataAccess.Contracts;
 using GymSystem.DataAccess.Data;
 using GymSystem.DataAccess.Entities;
+using GymSystem.DataAccess.Contracts;
+using GymSystem.DataAccess.Repositories;
 namespace GymSystem.BusinessLogic.Services;
 
 public class PlansService : IPlansService
 {
-    private readonly IPlansRepository _plansRepository;
+    private readonly IGenericRepository<Plan> _plansRepository;
 
-    public PlansService(IPlansRepository plansRepository)
+    public PlansService(IGenericRepository<Plan> plansRepository)
     {
         _plansRepository = plansRepository;
     }

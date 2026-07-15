@@ -8,7 +8,7 @@ public static class PlanSeeder
 {
     public static async Task SeedAsync(GymDbContext dbContext)
     {
-        //await dbContext.Database.MigrateAsync();
+        await dbContext.Database.MigrateAsync();
 
         if (await dbContext.Plans.AnyAsync())
         {

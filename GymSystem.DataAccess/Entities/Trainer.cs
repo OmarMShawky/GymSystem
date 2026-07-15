@@ -12,5 +12,5 @@ public class Trainer : User
     public Specialty Specialty { get; set; }
     public DateTime HireDate { get; set; }
 
-    // ICollection<Session>
+    public ICollection<Session> Sessions{ get; set; } = [];
 }

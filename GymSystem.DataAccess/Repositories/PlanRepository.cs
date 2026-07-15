@@ -1,10 +1,11 @@
 ﻿using GymSystem.DataAccess.Data;
+using GymSystem.DataAccess.Contracts;
 using GymSystem.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace GymSystem.DataAccess.Repositories;
 
-public class PlansRepository : IPlansRepository
+public class PlansRepository : IGenericRepository<Plan>
 {
     private readonly GymDbContext _context;
 
@@ -26,14 +27,22 @@ public class PlansRepository : IPlansRepository
     public async Task AddAsync(Plan plan, CancellationToken cancellationToken = default)
     {
         _context.Plans.Add(plan);
-        await SaveChangesAsync();
+        await _context.SaveChangesAsync();
     }
 
-    public void Update(Plan plan, CancellationToken cancellationToken = default)
-        => _context.Update(plan);
+    public async Task UpdateAsync(Plan plan, CancellationToken cancellationToken = default)
+    {
+        _context.Plans.Update(plan);
+        await _context.SaveChangesAsync();
+        
+    }
 
-    public void Delete(Plan plan, CancellationToken cancellationToken = default)
-        => _context.Remove(plan);
+    public async Task DeleteAsync(Plan plan, CancellationToken cancellationToken = default)
+      {
+        _context.Plans.Remove(plan);
+        await _context.SaveChangesAsync();
+        
+    }
 
     public async Task<int> SaveChangesAsync()
         => await _context.SaveChangesAsync();
