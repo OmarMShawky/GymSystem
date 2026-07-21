@@ -1,9 +1,4 @@
-﻿using GymSystem.DataAccess.Contracts;
-using GymSystem.DataAccess.Data;
-using GymSystem.DataAccess.Entities;
-using GymSystem.DataAccess.Contracts;
-using GymSystem.DataAccess.Repositories;
-namespace GymSystem.BusinessLogic.Services;
+﻿namespace GymSystem.BusinessLogic.Services;
 
 public class PlansService : IPlansService
 {

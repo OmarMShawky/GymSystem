@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GymSystem.DataAccess.Entities;
 
-public class Trainer : User
+public class Trainer : GymUser
 {
     public Specialty Specialty { get; set; }
     public DateTime HireDate { get; set; }

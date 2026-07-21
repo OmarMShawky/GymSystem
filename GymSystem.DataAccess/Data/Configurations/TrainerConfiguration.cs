@@ -1,6 +1,6 @@
 ﻿namespace GymSystem.DataAccess.Data.Configurations;
 
-public class TrainerConfiguration : UserConfiguration<Trainer>, IEntityTypeConfiguration<Trainer>
+public class TrainerConfiguration : GymUserConfiguration<Trainer>, IEntityTypeConfiguration<Trainer>
 {
     public new void Configure(EntityTypeBuilder<Trainer> builder)
     {

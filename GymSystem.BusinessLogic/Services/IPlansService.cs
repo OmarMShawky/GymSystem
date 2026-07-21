@@ -1,6 +1,4 @@
-﻿using GymSystem.DataAccess.Entities;
-
-namespace GymSystem.BusinessLogic.Services;
+﻿namespace GymSystem.BusinessLogic.Services;
 
 public interface IPlansService
 {

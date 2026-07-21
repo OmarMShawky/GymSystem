@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace GymSystem.DataAccess.Data.Configurations;
 
-public abstract class UserConfiguration<T> : IEntityTypeConfiguration<T> where T : User
+public abstract class GymUserConfiguration<T> : IEntityTypeConfiguration<T> where T : GymUser
 {
     public void Configure(EntityTypeBuilder<T> builder)
     {
