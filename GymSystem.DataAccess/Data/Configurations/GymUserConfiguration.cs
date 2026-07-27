@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GymSystem.DataAccess.Data.Configurations;
+﻿namespace GymSystem.DataAccess.Data.Configurations;
 
 public abstract class GymUserConfiguration<T> : IEntityTypeConfiguration<T> where T : GymUser
 {
@@ -24,6 +18,8 @@ public abstract class GymUserConfiguration<T> : IEntityTypeConfiguration<T> wher
 
         builder.HasIndex(u => u.Email)
                .IsUnique();
+
+        builder.HasQueryFilter(u => !u.IsDeleted);
 
         builder.OwnsOne(u => u.Address, a =>
         {

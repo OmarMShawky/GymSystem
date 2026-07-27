@@ -1,4 +1,6 @@
 ﻿using GymSystem.DataAccess.Enums;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GymSystem.DataAccess.Entities;
 
@@ -7,10 +9,31 @@ public class GymUser : BaseEntity
     public string Name { get; set; } = null!;
     public string Email { get; set; } = null!;
     public string Phone { get; set; } = null!;
+
+    [DataType(DataType.Date)]
     public DateOnly DateOfBirth { get; set; }
     public Gender Gender { get; set; }
     public Address Address { get; set; } = null!;
 
+    // Age is derived from DateOfBirth at runtime, never stored in the database.
+    [NotMapped]
+    public int Age
+    {
+        get
+        {
+            if (DateOfBirth == default)
+                return 0;
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var age = today.Year - DateOfBirth.Year;
+
+            // Adjust if the birthday hasn't occurred yet this year.
+            if (DateOfBirth > today.AddYears(-age))
+                age--;
+
+            return age;
+        }
+    }
 }
 
 [Owned]

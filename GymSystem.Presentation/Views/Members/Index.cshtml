@@ -1,4 +1,13 @@
 ﻿@model IEnumerable<MemberViewModel>
+@{
+    ViewBag.Title = "Members";
+}
+@* @if (ViewBag.Message != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="Alert">
+        @ViewBag.Message
+    </div>
+} *@
 <div class="container">
     <main role="main" class="pb-3">
         @*
@@ -64,7 +73,7 @@
                                             <ul class="dropdown-menu dropdown-menu-start"
                                                 aria-labelledby="dropdownMenuButton-@member.Id">
                                                 <li>
-                                                    <a asp-controller="Members" asp-action="MemberDetails" asp-route-id="@member.Id"
+                                                    <a asp-controller="Members" asp-action="Details" asp-route-id="@member.Id"
                                                        class="dropdown-item d-flex align-items-center gap-3">
                                                         <img src="~/images/info 1.jpg" alt="info icon"
                                                              style="width: 20px; height: 20px;" />
@@ -83,7 +92,7 @@
                                                     <hr class="dropdown-divider">
                                                 </li>
                                                 <li>
-                                                    <a asp-controller="Members" asp-action="EditMember" asp-route-id="@member.Id"
+                                                    <a asp-controller="Members" asp-action="Edit" asp-route-id="@member.Id"
                                                        class="dropdown-item d-flex align-items-center gap-3">
                                                         <img src="~/images/edit.jpg" alt="edit icon"
                                                              style="width: 20px; height: 20px;" />
@@ -94,12 +103,17 @@
                                                     <hr class="dropdown-divider">
                                                 </li>
                                                 <li>
-                                                    <a asp-controller="Members" asp-action="Delete" asp-route-id="@member.Id"
-                                                       class="dropdown-item d-flex align-items-center gap-3 text-danger">
-                                                        <img src="~/images/x-circle 1.jpg" alt="delete icon"
-                                                             style="width: 20px; height: 20px;" />
-                                                        <span>Delete</span>
-                                                    </a>
+                                                    <form asp-controller="Members" asp-action="Delete" asp-route-id="@member.Id"
+                                                          method="post"
+                                                          onsubmit="return confirm('Are you sure you want to delete @member.Name?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit"
+                                                                class="dropdown-item d-flex align-items-center gap-3 text-danger">
+                                                            <img src="~/images/x-circle 1.jpg" alt="delete icon"
+                                                                 style="width: 20px; height: 20px;" />
+                                                            <span>Delete</span>
+                                                        </button>
+                                                    </form>
                                                 </li>
                                             </ul>
 
@@ -138,5 +152,4 @@
             }
         });
     </script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 }

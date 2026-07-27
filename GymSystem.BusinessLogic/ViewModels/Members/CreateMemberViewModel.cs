@@ -1,10 +1,5 @@
 ﻿using GymSystem.DataAccess.Enums;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GymSystem.BusinessLogic.ViewModels.Members;
 
@@ -22,8 +17,9 @@ public class CreateMemberViewModel
 
     //----- Phone Number
     [Required(ErrorMessage = "Phone number is required.")]
+    [Display(Name = "Phone Number")]
     [DataType(DataType.PhoneNumber, ErrorMessage = "Invalid phone number format.")]
-    public string PhoneNumber { get; set; } = null!;
+    public string Phone { get; set; } = null!;
 
     //----- Date of Birth -----
     [Required(ErrorMessage = "Date of birth is required.")]

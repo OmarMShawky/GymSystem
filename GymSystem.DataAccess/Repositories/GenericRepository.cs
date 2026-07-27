@@ -1,10 +1,6 @@
 ﻿using GymSystem.DataAccess.Contracts;
 using GymSystem.DataAccess.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq.Expressions;
 
 namespace GymSystem.DataAccess.Repositories;
 
@@ -44,4 +40,10 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
         _context.Set<TEntity>().Remove(entity);
         return await _context.SaveChangesAsync();
     }
+
+    public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+        => _context.Set<TEntity>().AnyAsync(predicate, cancellationToken);
+
+    public Task<TEntity?> FirstOrDefault(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+        => _context.Set<TEntity>().FirstOrDefaultAsync(predicate, cancellationToken);
 }

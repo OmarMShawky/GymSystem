@@ -1,0 +1,109 @@
+@model EditTrainerViewModel
+@{
+    ViewBag.Title = "Edit Trainer";
+}
+
+<header class="mb-4 mt-3">
+    <h3 class="text-primary-color">Edit Trainer</h3>
+</header>
+
+<div class="alert alert-light border d-flex align-items-center gap-3" role="alert">
+    <i class="bi bi-person-badge fs-3 text-primary-color"></i>
+    <div>
+        <div class="text-muted small">Editing Profile For</div>
+        <div class="fw-bold fs-5">@Model.Name</div>
+        <div class="text-muted small">
+            Born @Model.DateOfBirth &middot; @Model.Gender
+        </div>
+    </div>
+</div>
+
+<form method="post" asp-controller="Trainers" asp-action="Edit" asp-route-id="@Model.Id">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <input type="hidden" asp-for="Id" />
+    @* Locked fields - round-tripped so the banner survives a failed post. *@
+    <input type="hidden" asp-for="Name" />
+    <input type="hidden" asp-for="DateOfBirth" />
+    <input type="hidden" asp-for="Gender" />
+
+    <!-- Contact Information -->
+    <div class="section-header mb-3">
+        <h5 class="text-primary fw-bold"><i class="bi bi-telephone me-2"></i>Contact Information</h5>
+        <hr class="mt-2">
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="Email"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="Phone"></label>
+            <input asp-for="Phone" class="form-control" placeholder="01012345678" />
+            <span asp-validation-for="Phone" class="text-danger"></span>
+        </div>
+    </div>
+
+    <!-- Address Information -->
+    <div class="section-header mb-3 mt-4">
+        <h5 class="text-primary fw-bold"><i class="bi bi-house me-2"></i>Address Information</h5>
+        <hr class="mt-2">
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="BuildingNumber"></label>
+            <input asp-for="BuildingNumber" class="form-control" type="number" />
+            <span asp-validation-for="BuildingNumber" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="Street"></label>
+            <input asp-for="Street" class="form-control" />
+            <span asp-validation-for="Street" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="City"></label>
+            <input asp-for="City" class="form-control" />
+            <span asp-validation-for="City" class="text-danger"></span>
+        </div>
+    </div>
+
+    <!-- Professional Information -->
+    <div class="section-header mb-3 mt-4">
+        <h5 class="text-primary fw-bold"><i class="bi bi-trophy me-2"></i>Professional Information</h5>
+        <hr class="mt-2">
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="Specialty"></label>
+            <select asp-for="Specialty" class="form-select" asp-items="@Html.GetEnumSelectList<Specialty>()">
+                <option value="">-- Select Specialty --</option>
+            </select>
+            <span asp-validation-for="Specialty" class="text-danger"></span>
+        </div>
+    </div>
+
+    <footer class="d-flex justify-content-end gap-3 mt-4">
+        <a asp-controller="Trainers" asp-action="Index" class="btn btn-outline-secondary px-4">
+            <i class="bi bi-arrow-left me-2"></i>Back to List
+        </a>
+
+        <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-save me-2"></i>Save Changes
+        </button>
+    </footer>
+</form>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}

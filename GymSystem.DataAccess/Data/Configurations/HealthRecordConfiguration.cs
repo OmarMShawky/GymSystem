@@ -5,10 +5,10 @@ public class HealthRecordConfiguration : IEntityTypeConfiguration<HealthRecord>
     public void Configure(EntityTypeBuilder<HealthRecord> builder)
     {
         builder.Property(h => h.Weight)
-               .HasPrecision(3, 2);
+               .HasPrecision(5, 2);
 
         builder.Property(h => h.Height)
-               .HasPrecision(3, 2);
+               .HasPrecision(5, 2);
 
         builder.Property(h => h.BloodType)
                .HasConversion<string>()

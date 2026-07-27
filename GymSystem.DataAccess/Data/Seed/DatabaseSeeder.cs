@@ -1,7 +1,4 @@
-﻿using GymSystem.DataAccess.Data;
-using GymSystem.DataAccess.Entities;
-
-namespace GymSystem.DataAccess.Data.Seed;
+﻿namespace GymSystem.DataAccess.Data.Seed;
 
 public class DatabaseSeeder
 {

@@ -1,7 +1,5 @@
-﻿using GymSystem.DataAccess.Data;
-using GymSystem.DataAccess.Contracts;
-using GymSystem.DataAccess.Entities;
-using Microsoft.EntityFrameworkCore;
+﻿using GymSystem.DataAccess.Contracts;
+using GymSystem.DataAccess.Data;
 
 namespace GymSystem.DataAccess.Repositories;
 

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GymSystem.DataAccess.Contracts;
+﻿namespace GymSystem.DataAccess.Contracts;
 
 public interface IPlansRepository
 {

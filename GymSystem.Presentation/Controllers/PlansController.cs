@@ -1,4 +1,5 @@
-﻿using GymSystem.BusinessLogic.Services;
+using GymSystem.BusinessLogic.Services;
+using GymSystem.BusinessLogic.ViewModels.Plans;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Presentation.Controllers;
@@ -15,6 +16,7 @@ public class PlansController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
+        ViewBag.Message = TempData["Hello from ViewBag"] as string;
         var plans = await _service.PlansAsync(cancellationToken);
         return View(plans);
     }
@@ -36,47 +38,54 @@ public class PlansController : Controller
 
         return View(plan);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+    {
+        if (id <= 0)
+        {
+            return RedirectToAction(nameof(Index));
+        }
+
+        var plan = await _service.GetPlanForEditAsync(id, cancellationToken);
+
+        if (plan is null)
+        {
+            return NotFound();
+        }
+
+        return View(plan);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, EditPlanViewModel editPlanViewModel, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+            return View(editPlanViewModel);
+
+        var result = await _service.UpdatePlanAsync(id, editPlanViewModel, cancellationToken);
+
+        if (!result)
+        {
+            ModelState.AddModelError(string.Empty, "Update failed. The plan may no longer exist.");
+            return View(editPlanViewModel);
+        }
+
+        TempData["Hello from ViewBag"] = "Plan updated successfully!";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleStatus(int id, CancellationToken cancellationToken)
+    {
+        var result = await _service.TogglePlanStatusAsync(id, cancellationToken);
+
+        TempData["Hello from ViewBag"] = result
+            ? "Plan status updated successfully!"
+            : "Plan status update failed!";
+
+        return RedirectToAction(nameof(Index));
+    }
 }
-
-
-//using GymSystem.BusinessLogic.Services;
-//using GymSystem.DataAccess.Data;
-//using GymSystem.DataAccess.Repositories;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.EntityFrameworkCore;
-
-//namespace GymSystem.Presentation.Controllers;
-
-//public class PlansController : Controller
-//{
-//    private readonly PlansService _service;
-
-//    public PlansController(PlansService service)
-//    {
-//        _service = service;
-
-//    [HttpGet]
-//    public async Task<IActionResult> Index(CancellationToken cancellationToken)
-//    {
-//        var plans = await _service.PlansAsync(cancellationToken);
-//        return View(plans);
-//    }
-
-//    [HttpGet]
-//    public async Task<IActionResult> Details(int id)
-//    {
-//        if (id <= 0)
-//        {
-//            return RedirectToAction(nameof(Index));
-//        }
-
-//        var plan = _service..GetByIdAsync(id);
-
-//        if (plan == null)
-//        {
-//            return RedirectToAction(nameof(Index));
-//        }
-
-//        return View(plan);
-//    }
-//}
