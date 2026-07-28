@@ -1,0 +1,85 @@
+@model EditMemberViewModel
+
+<header class="mb-4 mt-3">
+    <h3 class="text-primary-color">Edit Member</h3>
+</header>
+
+<form method="post" asp-action="Edit" asp-controller="Members" asp-route-id="@Model.Id">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <input type="hidden" asp-for="Id" />
+
+    <div class="section-header mb-3">
+        <h5 class="text-primary fw-bold">Personal Information</h5>
+        <hr class="mt-2">
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="Name"></label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="Email"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="Phone"></label>
+            <input asp-for="Phone" class="form-control" />
+            <span asp-validation-for="Phone" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="DateOfBirth"></label>
+            <input asp-for="DateOfBirth" class="form-control" type="date" />
+            <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="section-header mb-3 mt-4">
+        <h5 class="text-primary fw-bold">Address Information</h5>
+        <hr class="mt-2">
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="BuildingNumber"></label>
+            <input asp-for="BuildingNumber" class="form-control" type="number" />
+            <span asp-validation-for="BuildingNumber" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="Street"></label>
+            <input asp-for="Street" class="form-control" />
+            <span asp-validation-for="Street" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="City"></label>
+            <input asp-for="City" class="form-control" />
+            <span asp-validation-for="City" class="text-danger"></span>
+        </div>
+    </div>
+
+    <footer class="d-flex justify-content-end gap-3 mt-4">
+        <a asp-controller="Members" asp-action="Index" class="btn btn-outline-secondary px-4">
+            <i class="bi bi-arrow-left me-2"></i> Back to List
+        </a>
+
+        <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-save me-2"></i> Save Changes
+        </button>
+    </footer>
+</form>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}

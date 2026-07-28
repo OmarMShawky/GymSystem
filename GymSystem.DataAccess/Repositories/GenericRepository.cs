@@ -1,16 +1,12 @@
 ﻿using GymSystem.DataAccess.Contracts;
 using GymSystem.DataAccess.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq.Expressions;
 
 namespace GymSystem.DataAccess.Repositories;
 
 public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEntity : BaseEntity
 {
-    private readonly GymDbContext _context;
+    protected readonly GymDbContext _context;
 
     public GenericRepository(GymDbContext context)
     {
@@ -27,21 +23,27 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
         => await _context.Set<TEntity>().FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
 
-    public async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public async Task<int> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         _context.Set<TEntity>().Add(entity);
-        await _context.SaveChangesAsync();
+        return await _context.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public async Task<int> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         _context.Set<TEntity>().Update(entity);
-        await _context.SaveChangesAsync();
+        return await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public async Task<int> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         _context.Set<TEntity>().Remove(entity);
-        await _context.SaveChangesAsync();
+        return await _context.SaveChangesAsync();
     }
+
+    public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+        => _context.Set<TEntity>().AnyAsync(predicate, cancellationToken);
+
+    public Task<TEntity?> FirstOrDefault(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+        => _context.Set<TEntity>().FirstOrDefaultAsync(predicate, cancellationToken);
 }

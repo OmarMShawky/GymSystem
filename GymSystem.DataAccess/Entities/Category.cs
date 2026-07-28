@@ -1,11 +1,4 @@
-﻿using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GymSystem.DataAccess.Entities;
+﻿namespace GymSystem.DataAccess.Entities;
 
 public class Category : BaseEntity
 {

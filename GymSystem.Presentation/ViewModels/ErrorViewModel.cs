@@ -1,4 +1,4 @@
-namespace GymSystem.DataAccess.Entities;
+namespace GymSystem.Presentation.ViewModels;
 
 public class ErrorViewModel
 {

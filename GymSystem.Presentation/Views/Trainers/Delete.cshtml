@@ -1,0 +1,78 @@
+@model TrainerDetailsViewModel
+@{
+    ViewBag.Title = "Delete Trainer";
+    var hasScheduledSessions = ViewBag.HasScheduledSessions is true;
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-danger text-white text-center py-4">
+                <i class="bi bi-exclamation-triangle display-5 mb-2"></i>
+                <h3 class="mb-0">Delete Trainer</h3>
+            </div>
+
+            <div class="card-body p-4">
+                @if (hasScheduledSessions)
+                {
+                    <div class="alert alert-warning d-flex align-items-start gap-3" role="alert">
+                        <i class="bi bi-slash-circle fs-4"></i>
+                        <div>
+                            <strong>This trainer cannot be deleted.</strong>
+                            <div>They still have scheduled sessions assigned. Reassign or remove those sessions first.</div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-danger d-flex align-items-start gap-3" role="alert">
+                        <i class="bi bi-exclamation-octagon fs-4"></i>
+                        <div>
+                            <strong>This action is permanent.</strong>
+                            <div>The trainer will be deleted for good — this cannot be undone.</div>
+                        </div>
+                    </div>
+                }
+
+                <p class="text-muted mb-3">You are about to delete the following trainer:</p>
+
+                <ul class="list-group list-group-flush mb-0">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Name</span>
+                        <strong>@Model.Name</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Specialization</span>
+                        <span class="badge bg-primary rounded-pill px-3 py-2">@Model.Specialization</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Email</span>
+                        <strong>@Model.Email</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Phone</span>
+                        <strong>@Model.Phone</strong>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-footer bg-white border-0 p-4">
+                <div class="d-flex justify-content-end gap-3">
+                    <a asp-controller="Trainers" asp-action="Index" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-arrow-left me-2"></i>No, Back to List
+                    </a>
+
+                    @if (!hasScheduledSessions)
+                    {
+                        <form asp-controller="Trainers" asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger px-4">
+                                <i class="bi bi-trash me-2"></i>Yes, Delete Permanently
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

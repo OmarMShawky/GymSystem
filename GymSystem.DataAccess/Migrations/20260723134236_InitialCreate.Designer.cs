@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace GymSystem.Migrations
+namespace GymSystem.DataAccess.Migrations
 {
     [DbContext(typeof(GymDbContext))]
-    [Migration("20260714183506_AddRelationships")]
-    partial class AddRelationships
+    [Migration("20260723134236_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -121,8 +121,8 @@ namespace GymSystem.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("Height")
-                        .HasPrecision(3, 2)
-                        .HasColumnType("decimal(3,2)");
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -138,8 +138,8 @@ namespace GymSystem.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("Weight")
-                        .HasPrecision(3, 2)
-                        .HasColumnType("decimal(3,2)");
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
 
                     b.HasKey("Id");
 
@@ -459,7 +459,7 @@ namespace GymSystem.Migrations
 
             modelBuilder.Entity("GymSystem.DataAccess.Entities.Member", b =>
                 {
-                    b.OwnsOne("GymSystem.DataAccess.Entities.ValueObjects.Address", "Address", b1 =>
+                    b.OwnsOne("GymSystem.DataAccess.Entities.Address", "Address", b1 =>
                         {
                             b1.Property<int>("MemberId")
                                 .HasColumnType("int");
@@ -494,7 +494,7 @@ namespace GymSystem.Migrations
 
             modelBuilder.Entity("GymSystem.DataAccess.Entities.Membership", b =>
                 {
-                    b.HasOne("GymSystem.DataAccess.Entities.Member", "Menber")
+                    b.HasOne("GymSystem.DataAccess.Entities.Member", "Member")
                         .WithMany("MemberPlans")
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -506,7 +506,7 @@ namespace GymSystem.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Menber");
+                    b.Navigation("Member");
 
                     b.Navigation("Plan");
                 });
@@ -532,7 +532,7 @@ namespace GymSystem.Migrations
 
             modelBuilder.Entity("GymSystem.DataAccess.Entities.Trainer", b =>
                 {
-                    b.OwnsOne("GymSystem.DataAccess.Entities.ValueObjects.Address", "Address", b1 =>
+                    b.OwnsOne("GymSystem.DataAccess.Entities.Address", "Address", b1 =>
                         {
                             b1.Property<int>("TrainerId")
                                 .HasColumnType("int");

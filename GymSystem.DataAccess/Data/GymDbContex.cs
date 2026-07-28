@@ -1,7 +1,4 @@
-﻿using GymSystem.DataAccess.Entities;
-using Microsoft.EntityFrameworkCore;
-
-namespace GymSystem.DataAccess.Data;
+﻿namespace GymSystem.DataAccess.Data;
 
 public class GymDbContext : DbContext
 {

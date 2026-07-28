@@ -1,8 +1,4 @@
-﻿using GymSystem.DataAccess.Data;
-using GymSystem.DataAccess.Entities;
-using Microsoft.EntityFrameworkCore;
-
-namespace GymSystem.DataAccess.Data.Seed;
+﻿namespace GymSystem.DataAccess.Data.Seed;
 
 public static class PlanSeeder
 {
