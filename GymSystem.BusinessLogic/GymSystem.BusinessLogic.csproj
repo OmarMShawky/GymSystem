@@ -6,8 +6,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Needed for IFormFile / IWebHostEnvironment in the file-upload service. -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.17">
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="16.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.18">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

@@ -7,12 +7,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.17">
+    <!-- Ships with the build so the seeder can read it at startup. -->
+    <Content Include="Data\Seed\plans.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="16.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.18">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.17" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.17">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.18" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.18">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

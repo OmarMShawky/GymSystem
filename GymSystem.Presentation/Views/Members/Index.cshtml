@@ -54,8 +54,17 @@
                                 <tr>
                                     <td>
                                         <span class="avatar">
-                                            <img src="~/images/@member.Photo" alt="Default Avatar" class="rounded-circle"
-                                                 style="width: 40px; height: 40px;" />
+                                            @if (string.IsNullOrWhiteSpace(member.Photo))
+                                            {
+                                                @* Members created before photos were required have none. *@
+                                                <i class="bi bi-person-circle text-muted" style="font-size: 40px;"></i>
+                                            }
+                                            else
+                                            {
+                                                <img src="@Url.Action("Picture", "Members", new { fileName = member.Photo })"
+                                                     alt="@member.Name" class="rounded-circle"
+                                                     style="width: 40px; height: 40px; object-fit: cover;" />
+                                            }
                                         </span>
                                     </td>
                                     <td><span>@member.Name</span></td>

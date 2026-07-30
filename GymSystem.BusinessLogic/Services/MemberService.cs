@@ -1,202 +1,167 @@
-﻿namespace GymSystem.BusinessLogic.Services;
+using AutoMapper;
 
-public class MemberService : IMemberService
+namespace GymSystem.BusinessLogic.Services;
+
+public class MemberService(IUnitOfWork unitOfWork, IMapper mapper, IFileService fileService) : IMemberService
 {
-    private readonly IGenericRepository<Member> _memberRepo;
-    private readonly IGenericRepository<Membership> _membershipRepo;
-    private readonly IGenericRepository<Plan> _planRepo;
-    private readonly IGenericRepository<HealthRecord> _healthRecordRepo;
-    public MemberService(
-        IGenericRepository<Member> memberRepo,
-        IGenericRepository<Membership> membershipRepo,
-        IGenericRepository<Plan> planRepo,
-        IGenericRepository<HealthRecord> healthRecordRepo)
-    {
-        _memberRepo = memberRepo;
-        _membershipRepo = membershipRepo;
-        _planRepo = planRepo;
-        _healthRecordRepo = healthRecordRepo;
-    }
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
+    private readonly IFileService _fileService = fileService;
 
     public async Task<IEnumerable<MemberViewModel>> GetMembersAsync(
         CancellationToken cancellationToken = default)
     {
-        var members = await _memberRepo
+        var members = await _unitOfWork.GetRepository<Member>()
             .GetAllAsync(cancellationToken: cancellationToken);
 
-        return members.Select(m => new MemberViewModel
-        {
-            Id = m.Id,
-            Name = m.Name,
-            Email = m.Email,
-            Phone = m.Phone,
-            Gender = m.Gender.ToString(),
-            Photo = m.Photo
-        });
+        return _mapper.Map<IEnumerable<MemberViewModel>>(members);
     }
 
-    public async Task<bool> CreateMemberAsync(
+    public async Task<Result> CreateMemberAsync(
         CreateMemberViewModel createMemberViewModel, CancellationToken cancellationToken = default)
     {
-        // validate the input model
+        var memberRepo = _unitOfWork.GetRepository<Member>();
 
-        //if (createMemberViewModel is null || createMemberViewModel.HealthRecord is null)
-        //    return CreateMemberResult.ValidationFailed;
-
-        var emailExists = await _memberRepo
+        var emailExists = await memberRepo
             .AnyAsync(m => m.Email == createMemberViewModel.Email, cancellationToken);
 
-        var phoneExists = await _memberRepo
+        var phoneExists = await memberRepo
             .AnyAsync(m => m.Phone == createMemberViewModel.Phone, cancellationToken);
 
         if (emailExists || phoneExists)
-            return false;
+            return Result.Conflict("Email or phone already exists.");
+
+        // Validate and store the photo first - a rejected file must not create a member.
+        var upload = await _fileService.UploadAsync(
+            createMemberViewModel.Photo, FileSettings.MemberPhotosFolder, cancellationToken);
+
+        if (upload.IsFailure)
+            return Result.Fail(upload.Error!);
 
         // mapping ==> create CreateMemberViewModel ==> Member entity
 
-        var newMember = new Member
-        {
-            Name = createMemberViewModel.Name,
-            Email = createMemberViewModel.Email,
-            Phone = createMemberViewModel.Phone,
-            DateOfBirth = createMemberViewModel.DateOfBirth,
-            Gender = createMemberViewModel.Gender,
-            Photo = createMemberViewModel.Photo,
-            Address = new Address
-            {
-                BuildingNumber = createMemberViewModel.BuildingNumber,
-                Street = createMemberViewModel.Street,
-                City = createMemberViewModel.City
-            },
-            HealthRecord = new HealthRecord
-            {
-                Height = createMemberViewModel.HealthRecord.Height,
-                Weight = createMemberViewModel.HealthRecord.Weight,
-                BloodType = createMemberViewModel.HealthRecord.BloodType,
-                Notes = createMemberViewModel.HealthRecord.Notes
-            }
+        var newMember = _mapper.Map<Member>(createMemberViewModel);
 
-        };
+        // Only the file name is kept on the member record.
+        newMember.Photo = upload.Value;
 
         // save the new member to the database
 
-        return (await _memberRepo.AddAsync(newMember, cancellationToken)) > 0;
+        memberRepo.Add(newMember, cancellationToken);
+
+        if ((await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0)
+            return Result.Ok();
+
+        // Don't leave the uploaded file orphaned on disk if the insert failed.
+        _fileService.DeleteFile(FileSettings.MemberPhotosFolder, upload.Value);
+
+        return Result.Fail("The member could not be saved.");
     }
 
-    public async Task<MemberDetailsViewModel?> GetMemberDetailsAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<MemberDetailsViewModel>> GetMemberDetailsAsync(int id, CancellationToken cancellationToken = default)
     {
-        var member = await _memberRepo.GetByIdAsync(id, cancellationToken);
+        var member = await _unitOfWork.GetRepository<Member>()
+            .GetByIdAsync(id, cancellationToken);
 
         if (member is null)
-            return null;
+            return Result.NotFound<MemberDetailsViewModel>("Member not found.");
 
-        //var plan = await _planRepo.FirstOrDefault(p => p.Id == member.PlanId, cancellationToken);
-        var memberDetailsViewModel = new MemberDetailsViewModel
-        {
-            Id = member.Id,
-            Name = member.Name,
-            Email = member.Email,
-            Phone = member.Phone,
-            Address = $"{member.Address.BuildingNumber} - {member.Address.Street} - {member.Address.City}",
-            DateOfBirth = member.DateOfBirth.ToShortDateString(),
-            Gender = member.Gender.ToString(),
-            Photo = member.Photo,
+        var memberDetailsViewModel = _mapper.Map<MemberDetailsViewModel>(member);
 
-        };
         // IsActive is a [NotMapped] computed property, so EF can't translate it.
         // Filter on the mapped EndDate column instead (mirrors Membership.IsActive).
         var today = DateOnly.FromDateTime(DateTime.Now);
-        var membership = await _membershipRepo
+        var membership = await _unitOfWork.GetRepository<Membership>()
             .FirstOrDefault(m => m.MemberId == member.Id && m.EndDate > today, cancellationToken);
 
         if (membership is not null)
         {
-            var plan = await _planRepo.GetByIdAsync(membership.PlanId, cancellationToken);
+            var plan = await _unitOfWork.GetRepository<Plan>()
+                .GetByIdAsync(membership.PlanId, cancellationToken);
+
             memberDetailsViewModel.MembershipStartDate = membership.CreatedAt.ToShortDateString();
             memberDetailsViewModel.MembershipEndDate = membership.EndDate.ToShortDateString();
             memberDetailsViewModel.PlanName = plan?.Name ?? "No Plan";
         }
+
         return memberDetailsViewModel;
     }
 
-    public async Task<EditMemberViewModel?> GetMemberDetailsForEditAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<EditMemberViewModel>> GetMemberDetailsForEditAsync(int id, CancellationToken cancellationToken = default)
     {
-        var member = await _memberRepo.GetByIdAsync(id, cancellationToken);
+        var member = await _unitOfWork.GetRepository<Member>()
+            .GetByIdAsync(id, cancellationToken);
 
         if (member is null)
-            return null;
+            return Result.NotFound<EditMemberViewModel>("Member not found.");
 
-        return new EditMemberViewModel
-        {
-            Id = member.Id,
-            Name = member.Name,
-            Email = member.Email,
-            Phone = member.Phone,
-            DateOfBirth = member.DateOfBirth,
-            BuildingNumber = member.Address.BuildingNumber,
-            Street = member.Address.Street,
-            City = member.Address.City
-        };
+        return _mapper.Map<EditMemberViewModel>(member);
     }
-    public async Task<HealthRecordViewModel?> GetHealthRecordDetailsAsync(int memberId, CancellationToken cancellationToken = default)
-    {
-        var record = await _healthRecordRepo.FirstOrDefault(h => h.MemberId == memberId, cancellationToken);
 
-        if (record is null) return null;
+    public async Task<Result<HealthRecordViewModel>> GetHealthRecordDetailsAsync(int memberId, CancellationToken cancellationToken = default)
+    {
+        var record = await _unitOfWork.GetRepository<HealthRecord>()
+            .FirstOrDefault(h => h.MemberId == memberId, cancellationToken);
+
+        if (record is null)
+            return Result.NotFound<HealthRecordViewModel>("This member has no health record.");
 
         // Age is not stored; derive it at runtime from the member's DateOfBirth.
-        var member = await _memberRepo.GetByIdAsync(memberId, cancellationToken);
+        var member = await _unitOfWork.GetRepository<Member>()
+            .GetByIdAsync(memberId, cancellationToken);
 
-        return new HealthRecordViewModel
-        {
-            Height = record.Height,
-            Weight = record.Weight,
-            Age = member?.Age ?? 0,
-            BloodType = record.BloodType,
-            Notes = record.Notes
-        };
+        var healthRecordViewModel = _mapper.Map<HealthRecordViewModel>(record);
+        healthRecordViewModel.Age = member?.Age ?? 0;
 
+        return healthRecordViewModel;
     }
 
-    public async Task<bool> UpdateMemberAsync(int id, EditMemberViewModel editMemberViewModel, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateMemberAsync(int id, EditMemberViewModel editMemberViewModel, CancellationToken cancellationToken = default)
     {
-        var member = await _memberRepo.GetByIdAsync(id, cancellationToken);
+        var memberRepo = _unitOfWork.GetRepository<Member>();
+
+        var member = await memberRepo.GetByIdAsync(id, cancellationToken);
 
         if (member is null)
-            return false;
+            return Result.NotFound("Member not found.");
 
-        var emailExists = await _memberRepo
+        // Email/Phone must stay unique across OTHER members.
+        var emailExists = await memberRepo
             .AnyAsync(m => m.Id != id && m.Email == editMemberViewModel.Email, cancellationToken);
 
-        var phoneExists = await _memberRepo
+        var phoneExists = await memberRepo
             .AnyAsync(m => m.Id != id && m.Phone == editMemberViewModel.Phone, cancellationToken);
 
         if (emailExists || phoneExists)
-            return false;
+            return Result.Conflict("Email or phone is already in use by another member.");
 
-        member.Name = editMemberViewModel.Name;
-        member.Email = editMemberViewModel.Email;
-        member.Phone = editMemberViewModel.Phone;
-        member.DateOfBirth = editMemberViewModel.DateOfBirth;
-        member.Address.BuildingNumber = editMemberViewModel.BuildingNumber;
-        member.Address.Street = editMemberViewModel.Street;
-        member.Address.City = editMemberViewModel.City;
+        // Maps onto the tracked entity in place, so EF sees the changes.
+        _mapper.Map(editMemberViewModel, member);
 
-        return (await _memberRepo.UpdateAsync(member, cancellationToken)) > 0;
+        memberRepo.Update(member, cancellationToken);
+
+        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
+            ? Result.Ok()
+            : Result.Fail("The member could not be updated.");
     }
 
-    public async Task<bool> DeleteMemberAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteMemberAsync(int id, CancellationToken cancellationToken = default)
     {
-        var member = await _memberRepo.GetByIdAsync(id, cancellationToken);
+        var memberRepo = _unitOfWork.GetRepository<Member>();
+
+        var member = await memberRepo.GetByIdAsync(id, cancellationToken);
 
         if (member is null)
-            return false;
+            return Result.NotFound("Member not found.");
 
         // Soft delete: flag the row. The AuditColumnInterceptor stamps DeletedAt,
         // and the global query filter (!IsDeleted) hides it from future queries.
         member.IsDeleted = true;
 
-        return (await _memberRepo.UpdateAsync(member, cancellationToken)) > 0;
-    }
+        memberRepo.Update(member, cancellationToken);
 
+        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
+            ? Result.Ok()
+            : Result.Fail("The member could not be deleted.");
+    }
 }

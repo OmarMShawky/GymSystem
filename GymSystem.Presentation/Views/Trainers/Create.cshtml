@@ -86,11 +86,15 @@
 
     <div class="row g-3">
         <div class="col-12 col-md-6">
-            <label class="form-label" asp-for="Specialty"></label>
-            <select asp-for="Specialty" class="form-select" asp-items="@Html.GetEnumSelectList<Specialty>()">
+            <label class="form-label" asp-for="CategoryId"></label>
+            <select asp-for="CategoryId" class="form-select">
                 <option value="">-- Select Specialty --</option>
+                @foreach (var category in Model.Categories)
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
             </select>
-            <span asp-validation-for="Specialty" class="text-danger"></span>
+            <span asp-validation-for="CategoryId" class="text-danger"></span>
         </div>
     </div>
 

@@ -1,0 +1,37 @@
+[
+  {
+    "Name": "One Day",
+    "Description": "One day access to gym equipment and basic facilities.",
+    "DurationDays": 1,
+    "Price": 150,
+    "IsActive": true
+  },
+  {
+    "Name": "Basic Monthly",
+    "Description": "Monthly access to gym equipment during working hours.",
+    "DurationDays": 30,
+    "Price": 750,
+    "IsActive": true
+  },
+  {
+    "Name": "Standard Quarterly",
+    "Description": "Three months access with better value for regular members.",
+    "DurationDays": 90,
+    "Price": 2000,
+    "IsActive": true
+  },
+  {
+    "Name": "Premium Annual",
+    "Description": "Full year membership with premium access and best value.",
+    "DurationDays": 365,
+    "Price": 7000,
+    "IsActive": true
+  },
+  {
+    "Name": "Old Summer Offer",
+    "Description": "Inactive old offer kept for historical membership records.",
+    "DurationDays": 60,
+    "Price": 1200,
+    "IsActive": false
+  }
+]

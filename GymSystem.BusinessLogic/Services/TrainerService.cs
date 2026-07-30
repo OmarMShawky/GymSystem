@@ -1,162 +1,155 @@
-using GymSystem.BusinessLogic.Extensions;
+using AutoMapper;
+using System.Linq.Expressions;
 
 namespace GymSystem.BusinessLogic.Services;
 
-public class TrainerService : ITrainerService
+public class TrainerService(IUnitOfWork unitOfWork, IMapper mapper) : ITrainerService
 {
-    private readonly IGenericRepository<Trainer> _trainerRepo;
-    private readonly IGenericRepository<Session> _sessionRepo;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
 
-    public TrainerService(
-        IGenericRepository<Trainer> trainerRepo,
-        IGenericRepository<Session> sessionRepo)
-    {
-        _trainerRepo = trainerRepo;
-        _sessionRepo = sessionRepo;
-    }
+    // The trainer's specialty is now the linked category's name.
+    private static readonly Expression<Func<Trainer, object>>[] _categoryInclude =
+    [
+        t => t.Category
+    ];
 
     public async Task<IEnumerable<TrainerViewModel>> GetTrainersAsync(CancellationToken cancellationToken = default)
     {
-        var trainers = await _trainerRepo.GetAllAsync(cancellationToken: cancellationToken);
+        var trainers = await _unitOfWork.GetRepository<Trainer>()
+            .GetAllWithIncludesAsync(_categoryInclude, cancellationToken: cancellationToken);
 
-        return trainers.Select(t => new TrainerViewModel
-        {
-            Id = t.Id,
-            Name = t.Name,
-            Email = t.Email,
-            Phone = t.Phone,
-            Specialization = t.Specialty.ToDisplayName()
-        });
+        return _mapper.Map<IEnumerable<TrainerViewModel>>(trainers);
     }
 
-    public async Task<bool> CreateTrainerAsync(
+    public async Task<CreateTrainerViewModel> LoadLookupsAsync(
         CreateTrainerViewModel createTrainerViewModel, CancellationToken cancellationToken = default)
     {
+        createTrainerViewModel.Categories = await GetCategoryLookupsAsync(cancellationToken);
+        return createTrainerViewModel;
+    }
+
+    public async Task<EditTrainerViewModel> LoadLookupsAsync(
+        EditTrainerViewModel editTrainerViewModel, CancellationToken cancellationToken = default)
+    {
+        editTrainerViewModel.Categories = await GetCategoryLookupsAsync(cancellationToken);
+        return editTrainerViewModel;
+    }
+
+    public async Task<Result> CreateTrainerAsync(
+        CreateTrainerViewModel createTrainerViewModel, CancellationToken cancellationToken = default)
+    {
+        var trainerRepo = _unitOfWork.GetRepository<Trainer>();
+
         // Email and phone must be unique across trainers.
-        var emailExists = await _trainerRepo
+        var emailExists = await trainerRepo
             .AnyAsync(t => t.Email == createTrainerViewModel.Email, cancellationToken);
 
-        var phoneExists = await _trainerRepo
+        var phoneExists = await trainerRepo
             .AnyAsync(t => t.Phone == createTrainerViewModel.Phone, cancellationToken);
 
         if (emailExists || phoneExists)
-            return false;
+            return Result.Conflict("Email or phone already exists.");
 
-        var newTrainer = new Trainer
-        {
-            Name = createTrainerViewModel.Name,
-            Email = createTrainerViewModel.Email,
-            Phone = createTrainerViewModel.Phone,
-            DateOfBirth = createTrainerViewModel.DateOfBirth,
-            Gender = createTrainerViewModel.Gender,
-            Specialty = createTrainerViewModel.Specialty,
-            HireDate = DateTime.Now,
-            Address = new Address
-            {
-                BuildingNumber = createTrainerViewModel.BuildingNumber,
-                Street = createTrainerViewModel.Street,
-                City = createTrainerViewModel.City
-            }
-        };
+        var newTrainer = _mapper.Map<Trainer>(createTrainerViewModel);
 
-        return (await _trainerRepo.AddAsync(newTrainer, cancellationToken)) > 0;
+        trainerRepo.Add(newTrainer, cancellationToken);
+
+        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
+            ? Result.Ok()
+            : Result.Fail("The trainer could not be saved.");
     }
 
-    public async Task<TrainerDetailsViewModel?> GetTrainerDetailsAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<TrainerDetailsViewModel>> GetTrainerDetailsAsync(int id, CancellationToken cancellationToken = default)
     {
-        var trainer = await _trainerRepo.GetByIdAsync(id, cancellationToken);
+        var trainer = await _unitOfWork.GetRepository<Trainer>()
+            .GetByIdWithIncludesAsync(id, _categoryInclude, cancellationToken);
 
         if (trainer is null)
-            return null;
+            return Result.NotFound<TrainerDetailsViewModel>("Trainer not found.");
 
-        return new TrainerDetailsViewModel
-        {
-            Id = trainer.Id,
-            Name = trainer.Name,
-            Specialization = $"{trainer.Specialty.ToDisplayName()} Trainer",
-            Email = trainer.Email,
-            Phone = trainer.Phone,
-            DateOfBirth = trainer.DateOfBirth.ToShortDateString(),
-            Gender = trainer.Gender.ToString(),
-            BuildingNumber = trainer.Address.BuildingNumber,
-            Street = trainer.Address.Street,
-            City = trainer.Address.City
-        };
+        return _mapper.Map<TrainerDetailsViewModel>(trainer);
     }
 
-    public async Task<EditTrainerViewModel?> GetTrainerForEditAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<EditTrainerViewModel>> GetTrainerForEditAsync(int id, CancellationToken cancellationToken = default)
     {
-        var trainer = await _trainerRepo.GetByIdAsync(id, cancellationToken);
+        var trainer = await _unitOfWork.GetRepository<Trainer>()
+            .GetByIdAsync(id, cancellationToken);
 
         if (trainer is null)
-            return null;
+            return Result.NotFound<EditTrainerViewModel>("Trainer not found.");
 
-        return new EditTrainerViewModel
-        {
-            Id = trainer.Id,
-            Name = trainer.Name,
-            DateOfBirth = trainer.DateOfBirth.ToShortDateString(),
-            Gender = trainer.Gender.ToString(),
-            Email = trainer.Email,
-            Phone = trainer.Phone,
-            BuildingNumber = trainer.Address.BuildingNumber,
-            Street = trainer.Address.Street,
-            City = trainer.Address.City,
-            Specialty = trainer.Specialty
-        };
+        return await LoadLookupsAsync(_mapper.Map<EditTrainerViewModel>(trainer), cancellationToken);
     }
 
-    public async Task<bool> UpdateTrainerAsync(
+    public async Task<Result> UpdateTrainerAsync(
         int id, EditTrainerViewModel editTrainerViewModel, CancellationToken cancellationToken = default)
     {
-        var trainer = await _trainerRepo.GetByIdAsync(id, cancellationToken);
+        var trainerRepo = _unitOfWork.GetRepository<Trainer>();
+
+        var trainer = await trainerRepo.GetByIdAsync(id, cancellationToken);
 
         if (trainer is null)
-            return false;
+            return Result.NotFound("Trainer not found.");
 
         // Email/Phone must stay unique across OTHER trainers.
-        var emailExists = await _trainerRepo
+        var emailExists = await trainerRepo
             .AnyAsync(t => t.Id != id && t.Email == editTrainerViewModel.Email, cancellationToken);
 
-        var phoneExists = await _trainerRepo
+        var phoneExists = await trainerRepo
             .AnyAsync(t => t.Id != id && t.Phone == editTrainerViewModel.Phone, cancellationToken);
 
         if (emailExists || phoneExists)
-            return false;
+            return Result.Conflict("Email or phone is already in use by another trainer.");
 
-        // Name, DateOfBirth and Gender are locked on the edit form and stay untouched.
-        trainer.Email = editTrainerViewModel.Email;
-        trainer.Phone = editTrainerViewModel.Phone;
-        trainer.Specialty = editTrainerViewModel.Specialty;
-        trainer.Address.BuildingNumber = editTrainerViewModel.BuildingNumber;
-        trainer.Address.Street = editTrainerViewModel.Street;
-        trainer.Address.City = editTrainerViewModel.City;
+        // Maps onto the tracked entity in place; locked fields are ignored by the profile.
+        _mapper.Map(editTrainerViewModel, trainer);
 
-        return (await _trainerRepo.UpdateAsync(trainer, cancellationToken)) > 0;
+        trainerRepo.Update(trainer, cancellationToken);
+
+        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
+            ? Result.Ok()
+            : Result.Fail("The trainer could not be updated.");
     }
 
     public async Task<bool> HasScheduledSessionsAsync(int id, CancellationToken cancellationToken = default)
     {
         var now = DateTime.Now;
 
-        // A session still counts as scheduled until it has finished.
-        return await _sessionRepo
+        return await _unitOfWork.GetRepository<Session>()
             .AnyAsync(s => s.TrainerId == id && s.EndDate >= now, cancellationToken);
     }
 
-    public async Task<DeleteTrainerResult> DeleteTrainerAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteTrainerAsync(int id, CancellationToken cancellationToken = default)
     {
-        var trainer = await _trainerRepo.GetByIdAsync(id, cancellationToken);
+        var trainerRepo = _unitOfWork.GetRepository<Trainer>();
+
+        var trainer = await trainerRepo.GetByIdAsync(id, cancellationToken);
 
         if (trainer is null)
-            return DeleteTrainerResult.NotFound;
+            return Result.NotFound("Trainer not found.");
 
-        if (await HasScheduledSessionsAsync(id, cancellationToken))
-            return DeleteTrainerResult.HasScheduledSessions;
+        // Sessions.TrainerId is a required FK with restrict-on-delete, so ANY session
+        // (past or future) blocks a hard delete - not just scheduled ones.
+        var hasAnySession = await _unitOfWork.GetRepository<Session>()
+            .AnyAsync(s => s.TrainerId == id, cancellationToken);
+
+        if (hasAnySession)
+            return Result.Conflict("This trainer has scheduled sessions and cannot be deleted.");
 
         // Permanent, hard delete - trainers are not soft-deleted.
-        return (await _trainerRepo.DeleteAsync(trainer, cancellationToken)) > 0
-            ? DeleteTrainerResult.Success
-            : DeleteTrainerResult.NotFound;
+        trainerRepo.Delete(trainer, cancellationToken);
+
+        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
+            ? Result.Ok()
+            : Result.Fail("The trainer could not be deleted.");
+    }
+
+    private async Task<IEnumerable<LookupItemViewModel>> GetCategoryLookupsAsync(CancellationToken cancellationToken)
+    {
+        var categories = await _unitOfWork.GetRepository<Category>()
+            .GetAllAsync(cancellationToken: cancellationToken);
+
+        return _mapper.Map<IEnumerable<LookupItemViewModel>>(categories.OrderBy(c => c.Name));
     }
 }

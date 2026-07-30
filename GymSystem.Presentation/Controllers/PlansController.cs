@@ -1,17 +1,13 @@
+using GymSystem.BusinessLogic.Common;
 using GymSystem.BusinessLogic.Services;
 using GymSystem.BusinessLogic.ViewModels.Plans;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Presentation.Controllers;
 
-public class PlansController : Controller
+public class PlansController(IPlansService service) : Controller
 {
-    private readonly IPlansService _service;
-
-    public PlansController(IPlansService service)
-    {
-        _service = service;
-    }
+    private readonly IPlansService _service = service;
 
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -25,36 +21,28 @@ public class PlansController : Controller
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
     {
         if (id <= 0)
-        {
             return RedirectToAction(nameof(Index));
-        }
 
-        var plan = await _service.GetPlanByIdAsync(id, cancellationToken);
+        var result = await _service.GetPlanByIdAsync(id, cancellationToken);
 
-        if (plan == null)
-        {
+        if (result.IsFailure)
             return RedirectToAction(nameof(Index));
-        }
 
-        return View(plan);
+        return View(result.Value);
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
     {
         if (id <= 0)
-        {
             return RedirectToAction(nameof(Index));
-        }
 
-        var plan = await _service.GetPlanForEditAsync(id, cancellationToken);
+        var result = await _service.GetPlanForEditAsync(id, cancellationToken);
 
-        if (plan is null)
-        {
-            return NotFound();
-        }
+        if (result.IsFailure)
+            return this.FromFailure(result);
 
-        return View(plan);
+        return View(result.Value);
     }
 
     [HttpPost]
@@ -66,9 +54,12 @@ public class PlansController : Controller
 
         var result = await _service.UpdatePlanAsync(id, editPlanViewModel, cancellationToken);
 
-        if (!result)
+        if (result.Status == ResultStatus.NotFound)
+            return NotFound();
+
+        if (result.IsFailure)
         {
-            ModelState.AddModelError(string.Empty, "Update failed. The plan may no longer exist.");
+            ModelState.AddModelError(string.Empty, result.Error!);
             return View(editPlanViewModel);
         }
 
@@ -82,9 +73,9 @@ public class PlansController : Controller
     {
         var result = await _service.TogglePlanStatusAsync(id, cancellationToken);
 
-        TempData["Hello from ViewBag"] = result
+        TempData["Hello from ViewBag"] = result.IsSuccess
             ? "Plan status updated successfully!"
-            : "Plan status update failed!";
+            : result.Error;
 
         return RedirectToAction(nameof(Index));
     }

@@ -1,4 +1,5 @@
 ﻿using GymSystem.DataAccess.Enums;
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
 namespace GymSystem.BusinessLogic.ViewModels.Members;
@@ -31,7 +32,9 @@ public class CreateMemberViewModel
     public Gender Gender { get; set; }
 
     //----- Photo -----
-    public string? Photo { get; set; } = string.Empty;
+    [Display(Name = "Photo")]
+    [Required(ErrorMessage = "A profile photo is required.")]
+    public IFormFile Photo { get; set; } = null!;
 
     //----- Address -----
     [Required(ErrorMessage = "Address is required.")]

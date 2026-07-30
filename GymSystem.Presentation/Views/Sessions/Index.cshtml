@@ -1,0 +1,105 @@
+@model IEnumerable<SessionViewModel>
+@{
+    ViewBag.Title = "Sessions";
+
+    // Header colour and badge are both driven by the computed status.
+    static string HeaderClass(SessionStatus status) => status switch
+    {
+        SessionStatus.Upcoming => "bg-primary",
+        SessionStatus.Ongoing => "bg-success",
+        _ => "bg-secondary"
+    };
+}
+
+<header class="d-flex justify-content-between mt-5 mb-4 align-items-center">
+    <div>
+        <h2 class="text-primary-color mb-0">Sessions</h2>
+        <p class="text-muted mb-0">Training schedule at a glance</p>
+    </div>
+    <a asp-controller="Sessions" asp-action="Create" class="btn btn-fill fw-medium rounded-pill px-3 py-3"> + Add Session </a>
+</header>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        @ViewBag.Message
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (Model.Any())
+{
+    <div class="row g-4">
+        @foreach (var session in Model)
+        {
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-header text-white py-4 @HeaderClass(session.Status)">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <h4 class="mb-0">@session.Specialty</h4>
+                            <span class="badge bg-light text-dark rounded-pill">@session.Status</span>
+                        </div>
+                    </div>
+
+                    <div class="card-body d-flex flex-column">
+                        <p class="text-muted small">@session.Description</p>
+
+                        <ul class="list-unstyled mb-3">
+                            <li class="mb-2">
+                                <i class="bi bi-person-badge text-primary-color me-2"></i>
+                                <strong>Trainer:</strong> @session.TrainerName
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-calendar-event text-primary-color me-2"></i>
+                                <strong>Date:</strong> @session.Date
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-clock text-primary-color me-2"></i>
+                                <strong>Time:</strong> @session.Time
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-hourglass-split text-primary-color me-2"></i>
+                                <strong>Duration:</strong> @session.Duration
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-people text-primary-color me-2"></i>
+                                <strong>Capacity:</strong>
+                                <span class="badge rounded-pill @(session.IsFull ? "bg-danger" : "bg-success")">
+                                    @session.Slots
+                                </span>
+                            </li>
+                        </ul>
+
+                        <div class="mt-auto">
+                            <div class="d-grid gap-2">
+                                <a asp-controller="Sessions" asp-action="Details" asp-route-id="@session.Id"
+                                   class="btn btn-outline btn-sm">
+                                    <i class="bi bi-eye me-1"></i>View Details
+                                </a>
+
+                                <div class="d-flex gap-2">
+                                    <a asp-controller="Sessions" asp-action="Edit" asp-route-id="@session.Id"
+                                       class="btn btn-outline btn-sm flex-fill">
+                                        <i class="bi bi-pencil me-1"></i>Edit
+                                    </a>
+                                    <a asp-controller="Sessions" asp-action="Delete" asp-route-id="@session.Id"
+                                       class="btn btn-outline btn-sm flex-fill text-danger">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <i class="bi bi-calendar-x display-1 text-muted"></i>
+        <h4 class="mt-3 text-muted">No Sessions Available</h4>
+        <p class="text-muted">Schedule your first session to get started</p>
+    </div>
+}

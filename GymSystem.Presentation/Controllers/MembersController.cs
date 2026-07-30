@@ -1,16 +1,28 @@
-﻿using GymSystem.BusinessLogic.Services;
+using GymSystem.BusinessLogic.Common;
+using GymSystem.BusinessLogic.Services;
 using GymSystem.BusinessLogic.ViewModels.Members;
 using Microsoft.AspNetCore.Mvc;
-using System.Runtime.CompilerServices;
+
 namespace GymSystem.Presentation.Controllers;
 
-public class MembersController : Controller
+public class MembersController(IMemberService memberService, IFileService fileService) : Controller
 {
-    private readonly IMemberService _memberService;
+    private readonly IMemberService _memberService = memberService;
+    private readonly IFileService _fileService = fileService;
 
-    public MembersController(IMemberService memberService)
+    /// <summary>
+    /// Serves a member photo. Uploads live outside wwwroot, so the browser cannot
+    /// reach them directly - this action reads the file and streams it back.
+    /// </summary>
+    [HttpGet]
+    public IActionResult Picture(string fileName)
     {
-        _memberService = memberService;
+        var result = _fileService.GetFile(FileSettings.MemberPhotosFolder, fileName);
+
+        if (result.IsFailure)
+            return this.FromFailure(result);
+
+        return File(result.Value.Content, result.Value.ContentType);
     }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -34,46 +46,49 @@ public class MembersController : Controller
         if (!ModelState.IsValid)
             return View(memberViewModel);
 
-        // call service to create member
         var result = await _memberService.CreateMemberAsync(memberViewModel, cancellationToken);
-        if (result)
-            TempData["Hello from ViewBag"] = "Member created successfully!";
-        else
-            TempData["Hello from ViewBag"] = "Member creation failed!";
 
-        ModelState.AddModelError(string.Empty, "Email or Phone already exists.");
+        if (result.IsFailure)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            return View(memberViewModel);
+        }
 
+        TempData["Hello from ViewBag"] = "Member created successfully!";
         return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
-    public async Task<IActionResult> Details(int id)
+    public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
     {
-        var membershipDetails = await _memberService.GetMemberDetailsAsync(id);
+        var result = await _memberService.GetMemberDetailsAsync(id, cancellationToken);
 
-        if (membershipDetails is null)
-            return NotFound();
+        if (result.IsFailure)
+            return this.FromFailure(result);
 
-        return View(membershipDetails);
+        return View(result.Value);
     }
+
     [HttpGet]
     public async Task<IActionResult> HealthRecordDetails(int id, CancellationToken cancellationToken)
     {
-        var healthRecordDetails = await _memberService.GetHealthRecordDetailsAsync(id, cancellationToken);
+        var result = await _memberService.GetHealthRecordDetailsAsync(id, cancellationToken);
 
-        if (healthRecordDetails is null)
-            return NotFound();
+        if (result.IsFailure)
+            return this.FromFailure(result);
 
-        return View(healthRecordDetails);
+        return View(result.Value);
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
     {
-        var memberDetails = await _memberService.GetMemberDetailsForEditAsync(id, cancellationToken);
-        if (memberDetails is null)
-            return NotFound();
-        return View(memberDetails);
+        var result = await _memberService.GetMemberDetailsForEditAsync(id, cancellationToken);
+
+        if (result.IsFailure)
+            return this.FromFailure(result);
+
+        return View(result.Value);
     }
 
     [HttpPost]
@@ -83,11 +98,14 @@ public class MembersController : Controller
         if (!ModelState.IsValid)
             return View(editMemberViewModel);
 
-        // call service to update member
         var result = await _memberService.UpdateMemberAsync(id, editMemberViewModel, cancellationToken);
-        if (!result)
+
+        if (result.Status == ResultStatus.NotFound)
+            return NotFound();
+
+        if (result.IsFailure)
         {
-            ModelState.AddModelError(string.Empty, "Update failed. Email or phone may already be in use.");
+            ModelState.AddModelError(string.Empty, result.Error!);
             return View(editMemberViewModel);
         }
 
@@ -101,9 +119,9 @@ public class MembersController : Controller
     {
         var result = await _memberService.DeleteMemberAsync(id, cancellationToken);
 
-        TempData["Hello from ViewBag"] = result
+        TempData["Hello from ViewBag"] = result.IsSuccess
             ? "Member deleted successfully!"
-            : "Member delete failed!";
+            : result.Error;
 
         return RedirectToAction(nameof(Index));
     }

@@ -1,17 +1,13 @@
+using GymSystem.BusinessLogic.Common;
 using GymSystem.BusinessLogic.Services;
 using GymSystem.BusinessLogic.ViewModels.Trainers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Presentation.Controllers;
 
-public class TrainersController : Controller
+public class TrainersController(ITrainerService trainerService) : Controller
 {
-    private readonly ITrainerService _trainerService;
-
-    public TrainersController(ITrainerService trainerService)
-    {
-        _trainerService = trainerService;
-    }
+    private readonly ITrainerService _trainerService = trainerService;
 
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -22,9 +18,9 @@ public class TrainersController : Controller
     }
 
     [HttpGet]
-    public IActionResult Create()
+    public async Task<IActionResult> Create(CancellationToken cancellationToken)
     {
-        return View();
+        return View(await _trainerService.LoadLookupsAsync(new CreateTrainerViewModel(), cancellationToken));
     }
 
     [HttpPost]
@@ -32,14 +28,14 @@ public class TrainersController : Controller
     public async Task<IActionResult> Create(CreateTrainerViewModel createTrainerViewModel, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
-            return View(createTrainerViewModel);
+            return View(await _trainerService.LoadLookupsAsync(createTrainerViewModel, cancellationToken));
 
         var result = await _trainerService.CreateTrainerAsync(createTrainerViewModel, cancellationToken);
 
-        if (!result)
+        if (result.IsFailure)
         {
-            ModelState.AddModelError(string.Empty, "Email or phone already exists.");
-            return View(createTrainerViewModel);
+            ModelState.AddModelError(string.Empty, result.Error!);
+            return View(await _trainerService.LoadLookupsAsync(createTrainerViewModel, cancellationToken));
         }
 
         TempData["Hello from ViewBag"] = "Trainer created successfully!";
@@ -49,23 +45,23 @@ public class TrainersController : Controller
     [HttpGet]
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
     {
-        var trainer = await _trainerService.GetTrainerDetailsAsync(id, cancellationToken);
+        var result = await _trainerService.GetTrainerDetailsAsync(id, cancellationToken);
 
-        if (trainer is null)
-            return NotFound();
+        if (result.IsFailure)
+            return this.FromFailure(result);
 
-        return View(trainer);
+        return View(result.Value);
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
     {
-        var trainer = await _trainerService.GetTrainerForEditAsync(id, cancellationToken);
+        var result = await _trainerService.GetTrainerForEditAsync(id, cancellationToken);
 
-        if (trainer is null)
-            return NotFound();
+        if (result.IsFailure)
+            return this.FromFailure(result);
 
-        return View(trainer);
+        return View(result.Value);
     }
 
     [HttpPost]
@@ -73,14 +69,17 @@ public class TrainersController : Controller
     public async Task<IActionResult> Edit(int id, EditTrainerViewModel editTrainerViewModel, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
-            return View(editTrainerViewModel);
+            return View(await _trainerService.LoadLookupsAsync(editTrainerViewModel, cancellationToken));
 
         var result = await _trainerService.UpdateTrainerAsync(id, editTrainerViewModel, cancellationToken);
 
-        if (!result)
+        if (result.Status == ResultStatus.NotFound)
+            return NotFound();
+
+        if (result.IsFailure)
         {
-            ModelState.AddModelError(string.Empty, "Update failed. Email or phone may already be in use.");
-            return View(editTrainerViewModel);
+            ModelState.AddModelError(string.Empty, result.Error!);
+            return View(await _trainerService.LoadLookupsAsync(editTrainerViewModel, cancellationToken));
         }
 
         TempData["Hello from ViewBag"] = "Trainer updated successfully!";
@@ -91,14 +90,14 @@ public class TrainersController : Controller
     [HttpGet]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        var trainer = await _trainerService.GetTrainerDetailsAsync(id, cancellationToken);
+        var result = await _trainerService.GetTrainerDetailsAsync(id, cancellationToken);
 
-        if (trainer is null)
-            return NotFound();
+        if (result.IsFailure)
+            return this.FromFailure(result);
 
         ViewBag.HasScheduledSessions = await _trainerService.HasScheduledSessionsAsync(id, cancellationToken);
 
-        return View(trainer);
+        return View(result.Value);
     }
 
     // Step 2 of delete: the confirmed POST performs the permanent delete.
@@ -109,18 +108,16 @@ public class TrainersController : Controller
     {
         var result = await _trainerService.DeleteTrainerAsync(id, cancellationToken);
 
-        switch (result)
+        if (result.IsSuccess)
         {
-            case DeleteTrainerResult.Success:
-                TempData["Hello from ViewBag"] = "Trainer deleted successfully!";
-                return RedirectToAction(nameof(Index));
-
-            case DeleteTrainerResult.HasScheduledSessions:
-                TempData["Hello from ViewBag"] = "This trainer has scheduled sessions and cannot be deleted.";
-                return RedirectToAction(nameof(Delete), new { id });
-
-            default:
-                return NotFound();
+            TempData["Hello from ViewBag"] = "Trainer deleted successfully!";
+            return RedirectToAction(nameof(Index));
         }
+
+        if (result.Status == ResultStatus.NotFound)
+            return NotFound();
+
+        TempData["Hello from ViewBag"] = result.Error;
+        return RedirectToAction(nameof(Delete), new { id });
     }
 }

@@ -42,7 +42,11 @@ public class CreateTrainerViewModel
     public string City { get; set; } = null!;
 
     //----- Professional Information -----
+    [Display(Name = "Specialty")]
     [Required(ErrorMessage = "Specialty is required.")]
-    [EnumDataType(typeof(Specialty), ErrorMessage = "Select a specialty from the list.")]
-    public Specialty Specialty { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "Select a specialty from the list.")]
+    public int? CategoryId { get; set; }
+
+    /// <summary>Dropdown data, repopulated by the controller on every render.</summary>
+    public IEnumerable<LookupItemViewModel> Categories { get; set; } = [];
 }
