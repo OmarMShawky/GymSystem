@@ -7,8 +7,18 @@
                 <div class="col-md-6">
                     <div class="card card-details border-0 p-2 shadow">
                         <div class="text-center mt-3">
-                            <img src="~/images/@(string.IsNullOrWhiteSpace(Model.Photo) ? "User.jpg" : Model.Photo)" alt="@Model.Name" class="rounded-circle"
-                                 style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #fff; margin-top: -60px;" />
+                            @if (string.IsNullOrWhiteSpace(Model.Photo))
+                            {
+                                @* Members created before photos were required have none. *@
+                                <i class="bi bi-person-circle text-muted d-block"
+                                   style="font-size: 120px; line-height: 1; margin-top: -60px;"></i>
+                            }
+                            else
+                            {
+                                <img src="@Url.Action("Picture", "Members", new { fileName = Model.Photo })"
+                                     alt="@Model.Name" class="rounded-circle"
+                                     style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #fff; margin-top: -60px;" />
+                            }
                         </div>
                         <div class="card-body text-center">
                             <h2 class="mb-1 text-primary-color">@Model.Name</h2>

@@ -2,10 +2,11 @@ using AutoMapper;
 
 namespace GymSystem.BusinessLogic.Services;
 
-public class MemberService(IUnitOfWork unitOfWork, IMapper mapper) : IMemberService
+public class MemberService(IUnitOfWork unitOfWork, IMapper mapper, IFileService fileService) : IMemberService
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IMapper _mapper = mapper;
+    private readonly IFileService _fileService = fileService;
 
     public async Task<IEnumerable<MemberViewModel>> GetMembersAsync(
         CancellationToken cancellationToken = default)
@@ -30,17 +31,31 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper) : IMemberServ
         if (emailExists || phoneExists)
             return Result.Conflict("Email or phone already exists.");
 
+        // Validate and store the photo first - a rejected file must not create a member.
+        var upload = await _fileService.UploadAsync(
+            createMemberViewModel.Photo, FileSettings.MemberPhotosFolder, cancellationToken);
+
+        if (upload.IsFailure)
+            return Result.Fail(upload.Error!);
+
         // mapping ==> create CreateMemberViewModel ==> Member entity
 
         var newMember = _mapper.Map<Member>(createMemberViewModel);
+
+        // Only the file name is kept on the member record.
+        newMember.Photo = upload.Value;
 
         // save the new member to the database
 
         memberRepo.Add(newMember, cancellationToken);
 
-        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
-            ? Result.Ok()
-            : Result.Fail("The member could not be saved.");
+        if ((await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0)
+            return Result.Ok();
+
+        // Don't leave the uploaded file orphaned on disk if the insert failed.
+        _fileService.DeleteFile(FileSettings.MemberPhotosFolder, upload.Value);
+
+        return Result.Fail("The member could not be saved.");
     }
 
     public async Task<Result<MemberDetailsViewModel>> GetMemberDetailsAsync(int id, CancellationToken cancellationToken = default)

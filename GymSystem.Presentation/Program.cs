@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Profiles live in the BusinessLogic assembly, so scan that one - not Program's.
-builder.Services.AddAutoMapper(typeof(MemberProfile).Assembly);
+builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(MemberProfile).Assembly));
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
@@ -21,6 +21,7 @@ builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<IPlansService, PlansService>();
+builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IMemberService, MemberService>();
 builder.Services.AddScoped<ITrainerService, TrainerService>();
 builder.Services.AddScoped<ISessionService, SessionService>();

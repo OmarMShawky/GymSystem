@@ -5,9 +5,25 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Presentation.Controllers;
 
-public class MembersController(IMemberService memberService) : Controller
+public class MembersController(IMemberService memberService, IFileService fileService) : Controller
 {
     private readonly IMemberService _memberService = memberService;
+    private readonly IFileService _fileService = fileService;
+
+    /// <summary>
+    /// Serves a member photo. Uploads live outside wwwroot, so the browser cannot
+    /// reach them directly - this action reads the file and streams it back.
+    /// </summary>
+    [HttpGet]
+    public IActionResult Picture(string fileName)
+    {
+        var result = _fileService.GetFile(FileSettings.MemberPhotosFolder, fileName);
+
+        if (result.IsFailure)
+            return this.FromFailure(result);
+
+        return File(result.Value.Content, result.Value.ContentType);
+    }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {

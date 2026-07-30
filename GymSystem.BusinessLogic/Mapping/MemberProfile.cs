@@ -28,7 +28,9 @@ public class MemberProfile : Profile
             .ForMember(d => d.City, o => o.MapFrom(s => s.Address.City));
 
         //----- create form -> new Member -----
+        // Photo is an uploaded file; the service stores the saved file name afterwards.
         CreateMap<CreateMemberViewModel, Member>()
+            .ForMember(d => d.Photo, o => o.Ignore())
             .ForMember(d => d.Address, o => o.MapFrom(s => new Address
             {
                 BuildingNumber = s.BuildingNumber,
