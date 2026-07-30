@@ -4,6 +4,7 @@ using GymSystem.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GymSystem.DataAccess.Migrations
 {
     [DbContext(typeof(GymDbContext))]
-    partial class GymDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260730103214_AddSessionDescription")]
+    partial class AddSessionDescription
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -368,9 +371,6 @@ namespace GymSystem.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -404,12 +404,15 @@ namespace GymSystem.DataAccess.Migrations
                         .HasMaxLength(11)
                         .HasColumnType("nvarchar(11)");
 
+                    b.Property<string>("Specialty")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -532,12 +535,6 @@ namespace GymSystem.DataAccess.Migrations
 
             modelBuilder.Entity("GymSystem.DataAccess.Entities.Trainer", b =>
                 {
-                    b.HasOne("GymSystem.DataAccess.Entities.Category", "Category")
-                        .WithMany("Trainers")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.OwnsOne("GymSystem.DataAccess.Entities.Address", "Address", b1 =>
                         {
                             b1.Property<int>("TrainerId")
@@ -569,15 +566,11 @@ namespace GymSystem.DataAccess.Migrations
 
                     b.Navigation("Address")
                         .IsRequired();
-
-                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("GymSystem.DataAccess.Entities.Category", b =>
                 {
                     b.Navigation("Sessions");
-
-                    b.Navigation("Trainers");
                 });
 
             modelBuilder.Entity("GymSystem.DataAccess.Entities.Member", b =>

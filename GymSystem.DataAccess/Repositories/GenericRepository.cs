@@ -4,42 +4,54 @@ using System.Linq.Expressions;
 
 namespace GymSystem.DataAccess.Repositories;
 
-public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEntity : BaseEntity
+public class GenericRepository<TEntity>(GymDbContext context)
+    : IGenericRepository<TEntity> where TEntity : BaseEntity
 {
-    protected readonly GymDbContext _context;
+    protected readonly GymDbContext _context = context;
 
-    public GenericRepository(GymDbContext context)
-    {
-        _context = context;
-    }
-
-    //Get All Members
     public async Task<IEnumerable<TEntity>> GetAllAsync(bool trackChanges = false, CancellationToken cancellationToken = default)
         => trackChanges ? await _context.Set<TEntity>().ToListAsync(cancellationToken)
          : await _context.Set<TEntity>().AsNoTracking().ToListAsync(cancellationToken);
 
-    //Get Member By Id
     public async Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => await _context.Set<TEntity>().FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
+    public async Task<IEnumerable<TEntity>> GetAllWithIncludesAsync(
+        Expression<Func<TEntity, object>>[] includes,
+        bool trackChanges = false,
+        CancellationToken cancellationToken = default)
+        => await BuildQuery(includes, trackChanges).ToListAsync(cancellationToken);
 
-    public async Task<int> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public async Task<TEntity?> GetByIdWithIncludesAsync(
+        int id,
+        Expression<Func<TEntity, object>>[] includes,
+        CancellationToken cancellationToken = default)
+        => await BuildQuery(includes, trackChanges: false)
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+
+    private IQueryable<TEntity> BuildQuery(
+        Expression<Func<TEntity, object>>[] includes, bool trackChanges)
     {
-        _context.Set<TEntity>().Add(entity);
-        return await _context.SaveChangesAsync();
+        IQueryable<TEntity> query = _context.Set<TEntity>();
+
+        if (!trackChanges)
+            query = query.AsNoTracking();
+
+        foreach (var include in includes ?? [])
+            query = query.Include(include);
+
+        return query;
     }
 
-    public async Task<int> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
-    {
-        _context.Set<TEntity>().Update(entity);
-        return await _context.SaveChangesAsync();
-    }
 
-    public async Task<int> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
-    {
-        _context.Set<TEntity>().Remove(entity);
-        return await _context.SaveChangesAsync();
-    }
+    public void Add(TEntity entity, CancellationToken cancellationToken = default)
+        => _context.Set<TEntity>().Add(entity);
+
+    public void Update(TEntity entity, CancellationToken cancellationToken = default)
+        => _context.Set<TEntity>().Update(entity);
+
+    public void Delete(TEntity entity, CancellationToken cancellationToken = default)
+        => _context.Set<TEntity>().Remove(entity);
 
     public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
         => _context.Set<TEntity>().AnyAsync(predicate, cancellationToken);

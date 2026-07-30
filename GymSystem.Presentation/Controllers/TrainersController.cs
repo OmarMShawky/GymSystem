@@ -22,9 +22,9 @@ public class TrainersController : Controller
     }
 
     [HttpGet]
-    public IActionResult Create()
+    public async Task<IActionResult> Create(CancellationToken cancellationToken)
     {
-        return View();
+        return View(await _trainerService.LoadLookupsAsync(new CreateTrainerViewModel(), cancellationToken));
     }
 
     [HttpPost]
@@ -32,14 +32,14 @@ public class TrainersController : Controller
     public async Task<IActionResult> Create(CreateTrainerViewModel createTrainerViewModel, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
-            return View(createTrainerViewModel);
+            return View(await _trainerService.LoadLookupsAsync(createTrainerViewModel, cancellationToken));
 
         var result = await _trainerService.CreateTrainerAsync(createTrainerViewModel, cancellationToken);
 
         if (!result)
         {
             ModelState.AddModelError(string.Empty, "Email or phone already exists.");
-            return View(createTrainerViewModel);
+            return View(await _trainerService.LoadLookupsAsync(createTrainerViewModel, cancellationToken));
         }
 
         TempData["Hello from ViewBag"] = "Trainer created successfully!";
@@ -73,14 +73,14 @@ public class TrainersController : Controller
     public async Task<IActionResult> Edit(int id, EditTrainerViewModel editTrainerViewModel, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
-            return View(editTrainerViewModel);
+            return View(await _trainerService.LoadLookupsAsync(editTrainerViewModel, cancellationToken));
 
         var result = await _trainerService.UpdateTrainerAsync(id, editTrainerViewModel, cancellationToken);
 
         if (!result)
         {
             ModelState.AddModelError(string.Empty, "Update failed. Email or phone may already be in use.");
-            return View(editTrainerViewModel);
+            return View(await _trainerService.LoadLookupsAsync(editTrainerViewModel, cancellationToken));
         }
 
         TempData["Hello from ViewBag"] = "Trainer updated successfully!";

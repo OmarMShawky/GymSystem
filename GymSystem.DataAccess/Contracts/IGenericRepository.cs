@@ -4,11 +4,23 @@ namespace GymSystem.DataAccess.Contracts;
 
 public interface IGenericRepository<TEntity> where TEntity : BaseEntity
 {
-    Task<int> AddAsync(TEntity entity, CancellationToken cancellationToken = default);
-    Task<int> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
-    Task<int> DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
+    void Add(TEntity entity, CancellationToken cancellationToken = default);
+    void Update(TEntity entity, CancellationToken cancellationToken = default);
+    void Delete(TEntity entity, CancellationToken cancellationToken = default);
     Task<IEnumerable<TEntity>> GetAllAsync(bool trackChanges = false, CancellationToken cancellationToken = default);
     Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>Loads all entities, eager-loading the given navigation properties.</summary>
+    Task<IEnumerable<TEntity>> GetAllWithIncludesAsync(
+        Expression<Func<TEntity, object>>[] includes,
+        bool trackChanges = false,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Loads a single entity by id, eager-loading the given navigation properties.</summary>
+    Task<TEntity?> GetByIdWithIncludesAsync(
+        int id,
+        Expression<Func<TEntity, object>>[] includes,
+        CancellationToken cancellationToken = default);
     Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
     Task<TEntity?> FirstOrDefault(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
 

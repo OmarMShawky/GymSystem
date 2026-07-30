@@ -1,0 +1,103 @@
+@model CreateSessionViewModel
+@{
+    ViewBag.Title = "Add Session";
+}
+
+<header class="mb-4 mt-3">
+    <h3 class="text-primary-color">Add Session</h3>
+    <p class="text-muted mb-0">Fields marked <span class="text-danger">*</span> are required.</p>
+</header>
+
+<form method="post" asp-controller="Sessions" asp-action="Create">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <!-- Session Information -->
+    <div class="section-header mb-3">
+        <h5 class="text-primary fw-bold"><i class="bi bi-info-circle me-2"></i>Session Information</h5>
+        <hr class="mt-2">
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="CategoryId">Category <span class="text-danger">*</span></label>
+            <select asp-for="CategoryId" class="form-select">
+                <option value="">-- Select Category --</option>
+                @foreach (var category in Model.Categories)
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
+            </select>
+            <span asp-validation-for="CategoryId" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="TrainerId">Trainer <span class="text-danger">*</span></label>
+            <select asp-for="TrainerId" class="form-select">
+                <option value="">-- Select Trainer --</option>
+                @foreach (var trainer in Model.Trainers)
+                {
+                    <option value="@trainer.Id">@trainer.Name</option>
+                }
+            </select>
+            <span asp-validation-for="TrainerId" class="text-danger"></span>
+            <div class="form-text">The trainer's specialty must match the selected category.</div>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label" asp-for="Description">Description <span class="text-danger">*</span></label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="Capacity">Capacity <span class="text-danger">*</span></label>
+            <input asp-for="Capacity" class="form-control" type="number" min="1" max="25" />
+            <span asp-validation-for="Capacity" class="text-danger"></span>
+            <div class="form-text">Maximum number of participants.</div>
+        </div>
+    </div>
+
+    <!-- Date & Time -->
+    <div class="section-header mb-3 mt-4">
+        <h5 class="text-primary fw-bold"><i class="bi bi-calendar-event me-2"></i>Date &amp; Time</h5>
+        <hr class="mt-2">
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="StartDate">Start Date &amp; Time <span class="text-danger">*</span></label>
+            <input asp-for="StartDate" class="form-control" type="datetime-local"
+                   asp-format="{0:yyyy-MM-ddTHH:mm}" />
+            <span asp-validation-for="StartDate" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="EndDate">End Date &amp; Time <span class="text-danger">*</span></label>
+            <input asp-for="EndDate" class="form-control" type="datetime-local"
+                   asp-format="{0:yyyy-MM-ddTHH:mm}" />
+            <span asp-validation-for="EndDate" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <div class="form-text">Duration is calculated automatically from the start and end times.</div>
+        </div>
+    </div>
+
+    <footer class="d-flex justify-content-end gap-3 mt-4">
+        <a asp-controller="Sessions" asp-action="Index" class="btn btn-outline-secondary px-4">
+            <i class="bi bi-arrow-left me-2"></i>Back to List
+        </a>
+
+        <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-plus-circle me-2"></i>Add
+        </button>
+    </footer>
+</form>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}
