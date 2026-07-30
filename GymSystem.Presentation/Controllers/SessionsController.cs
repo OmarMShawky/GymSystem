@@ -1,3 +1,4 @@
+using GymSystem.BusinessLogic.Common;
 using GymSystem.BusinessLogic.Services;
 using GymSystem.BusinessLogic.ViewModels.Sessions;
 using Microsoft.AspNetCore.Mvc;
@@ -34,23 +35,101 @@ public class SessionsController(ISessionService sessionService) : Controller
 
         var result = await _sessionService.CreateSessionAsync(createSessionViewModel, cancellationToken);
 
-        if (result is CreateSessionResult.Success)
+        if (result.IsSuccess)
         {
             TempData["Hello from ViewBag"] = "Session created successfully!";
             return RedirectToAction(nameof(Index));
         }
 
-        ModelState.AddModelError(string.Empty, DescribeFailure(result));
+        ModelState.AddModelError(string.Empty, result.Error!);
 
         return View(await _sessionService.LoadLookupsAsync(createSessionViewModel, cancellationToken));
     }
 
-    private static string DescribeFailure(CreateSessionResult result) => result switch
+    [HttpGet]
+    public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
     {
-        CreateSessionResult.CategoryNotFound => "The selected category no longer exists.",
-        CreateSessionResult.TrainerNotFound => "The selected trainer no longer exists.",
-        CreateSessionResult.SpecialtyMismatch => "The selected trainer's specialty does not match the session category.",
-        CreateSessionResult.TrainerBusy => "The trainer already has a session scheduled in that time slot.",
-        _ => "The session could not be created."
-    };
+        var result = await _sessionService.GetSessionDetailsAsync(id, cancellationToken);
+
+        if (result.IsFailure)
+            return this.FromFailure(result);
+
+        return View(result.Value);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+    {
+        var result = await _sessionService.GetSessionForEditAsync(id, cancellationToken);
+
+        if (result.IsFailure)
+            return this.FromFailure(result);
+
+        // Only Upcoming sessions are mutable - don't even render the form otherwise.
+        if (result.Value.Status != SessionStatus.Upcoming)
+        {
+            TempData["Hello from ViewBag"] = $"An {result.Value.Status} session cannot be edited.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return View(result.Value);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, EditSessionViewModel editSessionViewModel, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+            return View(await _sessionService.LoadLookupsAsync(editSessionViewModel, cancellationToken));
+
+        var result = await _sessionService.UpdateSessionAsync(id, editSessionViewModel, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            TempData["Hello from ViewBag"] = "Session updated successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (result.Status == ResultStatus.NotFound)
+            return NotFound();
+
+        ModelState.AddModelError(string.Empty, result.Error!);
+
+        return View(await _sessionService.LoadLookupsAsync(editSessionViewModel, cancellationToken));
+    }
+
+    // Step 1 of delete: show the confirmation page.
+    [HttpGet]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        var result = await _sessionService.GetSessionDetailsAsync(id, cancellationToken);
+
+        if (result.IsFailure)
+            return this.FromFailure(result);
+
+        ViewBag.Message = TempData["Hello from ViewBag"] as string;
+
+        return View(result.Value);
+    }
+
+    // Step 2 of delete: the confirmed POST performs the permanent delete.
+    [HttpPost]
+    [ActionName(nameof(Delete))]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
+    {
+        var result = await _sessionService.DeleteSessionAsync(id, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            TempData["Hello from ViewBag"] = "Session deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (result.Status == ResultStatus.NotFound)
+            return NotFound();
+
+        TempData["Hello from ViewBag"] = result.Error;
+        return RedirectToAction(nameof(Delete), new { id });
+    }
 }

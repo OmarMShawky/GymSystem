@@ -16,7 +16,7 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper) : IMemberServ
         return _mapper.Map<IEnumerable<MemberViewModel>>(members);
     }
 
-    public async Task<bool> CreateMemberAsync(
+    public async Task<Result> CreateMemberAsync(
         CreateMemberViewModel createMemberViewModel, CancellationToken cancellationToken = default)
     {
         var memberRepo = _unitOfWork.GetRepository<Member>();
@@ -28,7 +28,7 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper) : IMemberServ
             .AnyAsync(m => m.Phone == createMemberViewModel.Phone, cancellationToken);
 
         if (emailExists || phoneExists)
-            return false;
+            return Result.Conflict("Email or phone already exists.");
 
         // mapping ==> create CreateMemberViewModel ==> Member entity
 
@@ -38,16 +38,18 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper) : IMemberServ
 
         memberRepo.Add(newMember, cancellationToken);
 
-        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0;
+        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
+            ? Result.Ok()
+            : Result.Fail("The member could not be saved.");
     }
 
-    public async Task<MemberDetailsViewModel?> GetMemberDetailsAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<MemberDetailsViewModel>> GetMemberDetailsAsync(int id, CancellationToken cancellationToken = default)
     {
         var member = await _unitOfWork.GetRepository<Member>()
             .GetByIdAsync(id, cancellationToken);
 
         if (member is null)
-            return null;
+            return Result.NotFound<MemberDetailsViewModel>("Member not found.");
 
         var memberDetailsViewModel = _mapper.Map<MemberDetailsViewModel>(member);
 
@@ -70,23 +72,24 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper) : IMemberServ
         return memberDetailsViewModel;
     }
 
-    public async Task<EditMemberViewModel?> GetMemberDetailsForEditAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<EditMemberViewModel>> GetMemberDetailsForEditAsync(int id, CancellationToken cancellationToken = default)
     {
         var member = await _unitOfWork.GetRepository<Member>()
             .GetByIdAsync(id, cancellationToken);
 
         if (member is null)
-            return null;
+            return Result.NotFound<EditMemberViewModel>("Member not found.");
 
         return _mapper.Map<EditMemberViewModel>(member);
     }
 
-    public async Task<HealthRecordViewModel?> GetHealthRecordDetailsAsync(int memberId, CancellationToken cancellationToken = default)
+    public async Task<Result<HealthRecordViewModel>> GetHealthRecordDetailsAsync(int memberId, CancellationToken cancellationToken = default)
     {
         var record = await _unitOfWork.GetRepository<HealthRecord>()
             .FirstOrDefault(h => h.MemberId == memberId, cancellationToken);
 
-        if (record is null) return null;
+        if (record is null)
+            return Result.NotFound<HealthRecordViewModel>("This member has no health record.");
 
         // Age is not stored; derive it at runtime from the member's DateOfBirth.
         var member = await _unitOfWork.GetRepository<Member>()
@@ -98,14 +101,14 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper) : IMemberServ
         return healthRecordViewModel;
     }
 
-    public async Task<bool> UpdateMemberAsync(int id, EditMemberViewModel editMemberViewModel, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateMemberAsync(int id, EditMemberViewModel editMemberViewModel, CancellationToken cancellationToken = default)
     {
         var memberRepo = _unitOfWork.GetRepository<Member>();
 
         var member = await memberRepo.GetByIdAsync(id, cancellationToken);
 
         if (member is null)
-            return false;
+            return Result.NotFound("Member not found.");
 
         // Email/Phone must stay unique across OTHER members.
         var emailExists = await memberRepo
@@ -115,24 +118,26 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper) : IMemberServ
             .AnyAsync(m => m.Id != id && m.Phone == editMemberViewModel.Phone, cancellationToken);
 
         if (emailExists || phoneExists)
-            return false;
+            return Result.Conflict("Email or phone is already in use by another member.");
 
         // Maps onto the tracked entity in place, so EF sees the changes.
         _mapper.Map(editMemberViewModel, member);
 
         memberRepo.Update(member, cancellationToken);
 
-        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0;
+        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
+            ? Result.Ok()
+            : Result.Fail("The member could not be updated.");
     }
 
-    public async Task<bool> DeleteMemberAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteMemberAsync(int id, CancellationToken cancellationToken = default)
     {
         var memberRepo = _unitOfWork.GetRepository<Member>();
 
         var member = await memberRepo.GetByIdAsync(id, cancellationToken);
 
         if (member is null)
-            return false;
+            return Result.NotFound("Member not found.");
 
         // Soft delete: flag the row. The AuditColumnInterceptor stamps DeletedAt,
         // and the global query filter (!IsDeleted) hides it from future queries.
@@ -140,6 +145,8 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper) : IMemberServ
 
         memberRepo.Update(member, cancellationToken);
 
-        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0;
+        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
+            ? Result.Ok()
+            : Result.Fail("The member could not be deleted.");
     }
 }

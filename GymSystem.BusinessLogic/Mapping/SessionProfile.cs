@@ -25,6 +25,26 @@ public class SessionProfile : Profile
                 s.SessionMembers != null ? s.SessionMembers.Count : 0))
             .ForMember(d => d.Status, o => o.MapFrom(s => ResolveStatus(s.StartDate, s.EndDate)));
 
+        //----- Session -> details page -----
+        CreateMap<Session, SessionDetailsViewModel>()
+            .ForMember(d => d.Category, o => o.MapFrom(s =>
+                s.Category != null ? s.Category.Name : s.Name))
+            .ForMember(d => d.TrainerName, o => o.MapFrom(s =>
+                s.Trainer != null ? s.Trainer.Name : "Unassigned"))
+            .ForMember(d => d.StartTime, o => o.MapFrom(s => s.StartDate.ToString("dd MMM yyyy, hh:mm tt")))
+            .ForMember(d => d.EndTime, o => o.MapFrom(s => s.EndDate.ToString("dd MMM yyyy, hh:mm tt")))
+            .ForMember(d => d.Duration, o => o.MapFrom(s => FormatLongDuration(s.EndDate - s.StartDate)))
+            .ForMember(d => d.BookedSlots, o => o.MapFrom(s =>
+                s.SessionMembers != null ? s.SessionMembers.Count : 0))
+            .ForMember(d => d.Status, o => o.MapFrom(s => ResolveStatus(s.StartDate, s.EndDate)));
+
+        //----- Session -> edit form (Category and Capacity are locked context) -----
+        CreateMap<Session, EditSessionViewModel>()
+            .ForMember(d => d.Category, o => o.MapFrom(s =>
+                s.Category != null ? s.Category.Name : s.Name))
+            .ForMember(d => d.Status, o => o.MapFrom(s => ResolveStatus(s.StartDate, s.EndDate)))
+            .ForMember(d => d.Trainers, o => o.Ignore());
+
         //----- create form -> new Session -----
         // The category names the session; there is no Name field on the form.
         CreateMap<CreateSessionViewModel, Session>()
@@ -47,6 +67,27 @@ public class SessionProfile : Profile
         return now <= end ? SessionStatus.Ongoing : SessionStatus.Completed;
     }
 
+    /// <summary>Long form for the details page, e.g. "1 Hour 30 Minutes".</summary>
+    private static string FormatLongDuration(TimeSpan duration)
+    {
+        if (duration <= TimeSpan.Zero)
+            return "-";
+
+        var hours = (int)duration.TotalHours;
+        var minutes = duration.Minutes;
+
+        var parts = new List<string>();
+
+        if (hours > 0)
+            parts.Add($"{hours} {(hours == 1 ? "Hour" : "Hours")}");
+
+        if (minutes > 0)
+            parts.Add($"{minutes} {(minutes == 1 ? "Minute" : "Minutes")}");
+
+        return string.Join(" ", parts);
+    }
+
+    /// <summary>Short form for the index cards, e.g. "1h 30m".</summary>
     private static string FormatDuration(TimeSpan duration)
     {
         if (duration <= TimeSpan.Zero)

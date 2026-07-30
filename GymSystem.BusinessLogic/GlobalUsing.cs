@@ -1,4 +1,5 @@
 ﻿global using GymSystem.BusinessLogic.Services;
+global using GymSystem.BusinessLogic.Common;
 global using GymSystem.BusinessLogic.ViewModels;
 global using GymSystem.BusinessLogic.ViewModels.Members;
 global using GymSystem.BusinessLogic.ViewModels.Plans;

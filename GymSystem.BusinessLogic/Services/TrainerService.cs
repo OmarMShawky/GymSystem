@@ -36,7 +36,7 @@ public class TrainerService(IUnitOfWork unitOfWork, IMapper mapper) : ITrainerSe
         return editTrainerViewModel;
     }
 
-    public async Task<bool> CreateTrainerAsync(
+    public async Task<Result> CreateTrainerAsync(
         CreateTrainerViewModel createTrainerViewModel, CancellationToken cancellationToken = default)
     {
         var trainerRepo = _unitOfWork.GetRepository<Trainer>();
@@ -49,38 +49,40 @@ public class TrainerService(IUnitOfWork unitOfWork, IMapper mapper) : ITrainerSe
             .AnyAsync(t => t.Phone == createTrainerViewModel.Phone, cancellationToken);
 
         if (emailExists || phoneExists)
-            return false;
+            return Result.Conflict("Email or phone already exists.");
 
         var newTrainer = _mapper.Map<Trainer>(createTrainerViewModel);
 
         trainerRepo.Add(newTrainer, cancellationToken);
 
-        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0;
+        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
+            ? Result.Ok()
+            : Result.Fail("The trainer could not be saved.");
     }
 
-    public async Task<TrainerDetailsViewModel?> GetTrainerDetailsAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<TrainerDetailsViewModel>> GetTrainerDetailsAsync(int id, CancellationToken cancellationToken = default)
     {
         var trainer = await _unitOfWork.GetRepository<Trainer>()
             .GetByIdWithIncludesAsync(id, _categoryInclude, cancellationToken);
 
         if (trainer is null)
-            return null;
+            return Result.NotFound<TrainerDetailsViewModel>("Trainer not found.");
 
         return _mapper.Map<TrainerDetailsViewModel>(trainer);
     }
 
-    public async Task<EditTrainerViewModel?> GetTrainerForEditAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<EditTrainerViewModel>> GetTrainerForEditAsync(int id, CancellationToken cancellationToken = default)
     {
         var trainer = await _unitOfWork.GetRepository<Trainer>()
             .GetByIdAsync(id, cancellationToken);
 
         if (trainer is null)
-            return null;
+            return Result.NotFound<EditTrainerViewModel>("Trainer not found.");
 
         return await LoadLookupsAsync(_mapper.Map<EditTrainerViewModel>(trainer), cancellationToken);
     }
 
-    public async Task<bool> UpdateTrainerAsync(
+    public async Task<Result> UpdateTrainerAsync(
         int id, EditTrainerViewModel editTrainerViewModel, CancellationToken cancellationToken = default)
     {
         var trainerRepo = _unitOfWork.GetRepository<Trainer>();
@@ -88,7 +90,7 @@ public class TrainerService(IUnitOfWork unitOfWork, IMapper mapper) : ITrainerSe
         var trainer = await trainerRepo.GetByIdAsync(id, cancellationToken);
 
         if (trainer is null)
-            return false;
+            return Result.NotFound("Trainer not found.");
 
         // Email/Phone must stay unique across OTHER trainers.
         var emailExists = await trainerRepo
@@ -98,14 +100,16 @@ public class TrainerService(IUnitOfWork unitOfWork, IMapper mapper) : ITrainerSe
             .AnyAsync(t => t.Id != id && t.Phone == editTrainerViewModel.Phone, cancellationToken);
 
         if (emailExists || phoneExists)
-            return false;
+            return Result.Conflict("Email or phone is already in use by another trainer.");
 
         // Maps onto the tracked entity in place; locked fields are ignored by the profile.
         _mapper.Map(editTrainerViewModel, trainer);
 
         trainerRepo.Update(trainer, cancellationToken);
 
-        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0;
+        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
+            ? Result.Ok()
+            : Result.Fail("The trainer could not be updated.");
     }
 
     public async Task<bool> HasScheduledSessionsAsync(int id, CancellationToken cancellationToken = default)
@@ -116,28 +120,29 @@ public class TrainerService(IUnitOfWork unitOfWork, IMapper mapper) : ITrainerSe
             .AnyAsync(s => s.TrainerId == id && s.EndDate >= now, cancellationToken);
     }
 
-    public async Task<DeleteTrainerResult> DeleteTrainerAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteTrainerAsync(int id, CancellationToken cancellationToken = default)
     {
         var trainerRepo = _unitOfWork.GetRepository<Trainer>();
 
         var trainer = await trainerRepo.GetByIdAsync(id, cancellationToken);
 
         if (trainer is null)
-            return DeleteTrainerResult.NotFound;
+            return Result.NotFound("Trainer not found.");
 
-
+        // Sessions.TrainerId is a required FK with restrict-on-delete, so ANY session
+        // (past or future) blocks a hard delete - not just scheduled ones.
         var hasAnySession = await _unitOfWork.GetRepository<Session>()
             .AnyAsync(s => s.TrainerId == id, cancellationToken);
 
         if (hasAnySession)
-            return DeleteTrainerResult.HasScheduledSessions;
+            return Result.Conflict("This trainer has scheduled sessions and cannot be deleted.");
 
         // Permanent, hard delete - trainers are not soft-deleted.
         trainerRepo.Delete(trainer, cancellationToken);
 
         return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
-            ? DeleteTrainerResult.Success
-            : DeleteTrainerResult.NotFound;
+            ? Result.Ok()
+            : Result.Fail("The trainer could not be deleted.");
     }
 
     private async Task<IEnumerable<LookupItemViewModel>> GetCategoryLookupsAsync(CancellationToken cancellationToken)
