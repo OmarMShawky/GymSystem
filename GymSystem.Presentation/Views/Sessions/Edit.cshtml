@@ -1,4 +1,4 @@
-@model EditSessionViewModel
+﻿@model EditSessionViewModel
 @{
     ViewBag.Title = "Edit Session";
 }
@@ -25,12 +25,11 @@
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <input type="hidden" asp-for="Id" />
-    @* Locked context, round-tripped so the banner survives a failed post. *@
+
     <input type="hidden" asp-for="Category" />
     <input type="hidden" asp-for="Capacity" />
     <input type="hidden" asp-for="Status" />
 
-    <!-- Session Information -->
     <div class="section-header mb-3">
         <h5 class="text-primary fw-bold"><i class="bi bi-info-circle me-2"></i>Session Information</h5>
         <hr class="mt-2">
@@ -57,7 +56,6 @@
         </div>
     </div>
 
-    <!-- Date & Time -->
     <div class="section-header mb-3 mt-4">
         <h5 class="text-primary fw-bold"><i class="bi bi-calendar-event me-2"></i>Date &amp; Time</h5>
         <hr class="mt-2">

@@ -2,37 +2,15 @@
 @{
     ViewBag.Title = "Members";
 }
-@* @if (ViewBag.Message != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="Alert">
-        @ViewBag.Message
-    </div>
-} *@
+
 <div class="container">
     <main role="main" class="pb-3">
-        @*
-    Alert Messages
-    Show Success Message if Member is Created Successfully
-    <div id="Alert" class="alert alert-success alert-dismissible fade show">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        Member Created Successfully
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
 
-    Show Error Message if Member Failed To Create
-    <div id="Alert" class="alert alert-danger alert-dismissible fade show">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        Member Failed To Create
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    *@
         <div class="container">
             <header class="d-flex justify-content-end mt-5 mb-4 align-items-center">
                 <a asp-controller="Members" asp-action="Create" class="btn btn-fill fw-medium rounded-pill px-3 py-3"> + Add Member </a>
             </header>
 
-            @* Page Content*@
-            @* Show Member List if Members Exist *@
             @if (Model.Any())
             {
                 <div class="table-responsive " style="overflow: visible;">
@@ -48,7 +26,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @* loop through members and display their data *@
+
                             @foreach (var member in Model)
                             {
                                 <tr>
@@ -56,7 +34,7 @@
                                         <span class="avatar">
                                             @if (string.IsNullOrWhiteSpace(member.Photo))
                                             {
-                                                @* Members created before photos were required have none. *@
+
                                                 <i class="bi bi-person-circle text-muted" style="font-size: 40px;"></i>
                                             }
                                             else
@@ -125,7 +103,6 @@
                                                     </form>
                                                 </li>
                                             </ul>
-
 
                                         </div>
                                     </td>

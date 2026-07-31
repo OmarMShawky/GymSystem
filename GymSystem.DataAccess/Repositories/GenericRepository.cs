@@ -43,7 +43,6 @@ public class GenericRepository<TEntity>(GymDbContext context)
         return query;
     }
 
-
     public void Add(TEntity entity, CancellationToken cancellationToken = default)
         => _context.Set<TEntity>().Add(entity);
 
@@ -55,6 +54,12 @@ public class GenericRepository<TEntity>(GymDbContext context)
 
     public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
         => _context.Set<TEntity>().AnyAsync(predicate, cancellationToken);
+
+    public Task<int> CountAsync(
+        Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default)
+        => predicate is null
+            ? _context.Set<TEntity>().CountAsync(cancellationToken)
+            : _context.Set<TEntity>().CountAsync(predicate, cancellationToken);
 
     public Task<TEntity?> FirstOrDefault(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
         => _context.Set<TEntity>().FirstOrDefaultAsync(predicate, cancellationToken);

@@ -1,0 +1,122 @@
+@model IEnumerable<BookingViewModel>
+@{
+    ViewBag.Title = "Sessions Schedule";
+
+    static string StatusClass(SessionStatus status) => status switch
+    {
+        SessionStatus.Upcoming => "bg-primary",
+        SessionStatus.Ongoing => "bg-success",
+        _ => "bg-secondary"
+    };
+}
+
+<header class="d-flex justify-content-between mt-5 mb-4 align-items-center">
+    <div>
+        <h2 class="text-primary-color mb-0">Sessions Schedule</h2>
+        <p class="text-muted mb-0">Who is booked on which session, and who showed up</p>
+    </div>
+    <a asp-controller="Bookings" asp-action="Create" class="btn btn-fill fw-medium rounded-pill px-3 py-3"> + Book a Session </a>
+</header>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        @ViewBag.Message
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (Model.Any())
+{
+    <div class="table-responsive" style="overflow: visible;">
+        <table class="table table-borderless align-middle">
+            <thead>
+                <tr>
+                    <th><span>Member</span></th>
+                    <th><span>Session</span></th>
+                    <th><span>Trainer</span></th>
+                    <th><span>Date</span></th>
+                    <th><span>Time</span></th>
+                    <th><span>Session</span></th>
+                    <th><span>Attendance</span></th>
+                    <th><span>Action</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model)
+                {
+                    <tr>
+                        <td><span>@booking.MemberName</span></td>
+                        <td><span class="badge bg-primary rounded-pill px-3 py-2">@booking.SessionName</span></td>
+                        <td><span>@booking.TrainerName</span></td>
+                        <td><span>@booking.Date</span></td>
+                        <td><span>@booking.Time</span></td>
+                        <td>
+                            <span class="badge rounded-pill px-3 py-2 @StatusClass(booking.SessionStatus)">
+                                @booking.SessionStatus
+                            </span>
+                        </td>
+                        <td>
+                            @if (booking.CanMarkAttendance)
+                            {
+                                <form asp-controller="Bookings" asp-action="ToggleAttendance"
+                                      asp-route-id="@booking.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit"
+                                            class="btn btn-sm rounded-pill px-3 @(booking.IsAttended ? "btn-success" : "btn-outline-secondary")"
+                                            title="Click to toggle">
+                                        <i class="bi @(booking.IsAttended ? "bi-check-circle-fill" : "bi-x-circle")"></i>
+                                        @booking.AttendanceLabel
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">@booking.AttendanceLabel</span>
+                            }
+                        </td>
+                        <td class="action position-relative">
+                            <div class="dropdown">
+                                <button class="btn btn-link p-0 border-0" type="button"
+                                        id="dropdownMenuButton-@booking.Id" data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                    <img src="~/images/action dots.jpg" alt="action icon" />
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton-@booking.Id">
+                                    <li>
+                                        <a asp-controller="Bookings" asp-action="Details" asp-route-id="@booking.Id"
+                                           class="dropdown-item d-flex align-items-center gap-3">
+                                            <img src="~/images/info 1.jpg" alt="info icon"
+                                                 style="width: 20px; height: 20px;" />
+                                            <span>View Details</span>
+                                        </a>
+                                    </li>
+                                    @if (booking.CanCancel)
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a asp-controller="Bookings" asp-action="Delete" asp-route-id="@booking.Id"
+                                               class="dropdown-item d-flex align-items-center gap-3 text-danger">
+                                                <img src="~/images/x-circle 1.jpg" alt="cancel icon"
+                                                     style="width: 20px; height: 20px;" />
+                                                <span>Cancel Booking</span>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <i class="bi bi-calendar2-week display-1 text-muted"></i>
+        <h4 class="mt-3 text-muted">No Bookings Yet</h4>
+        <p class="text-muted">Book a member onto an upcoming session to get started</p>
+    </div>
+}

@@ -1,15 +1,17 @@
-@model EditMemberViewModel
+﻿@model EditMemberViewModel
 
 <header class="mb-4 mt-3">
     <h3 class="text-primary-color">Edit Member</h3>
 </header>
 
-<form method="post" asp-action="Edit" asp-controller="Members" asp-route-id="@Model.Id">
+<form method="post" asp-action="Edit" asp-controller="Members" asp-route-id="@Model.Id"
+      enctype="multipart/form-data">
     @Html.AntiForgeryToken()
 
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="CurrentPhoto" />
 
     <div class="section-header mb-3">
         <h5 class="text-primary fw-bold">Personal Information</h5>
@@ -67,6 +69,46 @@
         </div>
     </div>
 
+    <div class="section-header mb-3 mt-4">
+        <h5 class="text-primary fw-bold">Photo</h5>
+        <hr class="mt-2">
+    </div>
+
+    <div class="row g-3 align-items-center">
+        <div class="col-12 col-md-3 text-center">
+            @if (Model.HasPhoto)
+            {
+                <img src="@Url.Action("Picture", "Members", new { fileName = Model.CurrentPhoto })"
+                     alt="@Model.Name" class="rounded-circle"
+                     style="width: 110px; height: 110px; object-fit: cover;" />
+                <div class="text-muted small mt-2">Current photo</div>
+            }
+            else
+            {
+                <i class="bi bi-person-circle text-muted" style="font-size: 110px;"></i>
+                <div class="text-muted small mt-2">No photo yet</div>
+            }
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="Photo">
+                @(Model.HasPhoto ? "Replace photo" : "Add a photo")
+            </label>
+            <input asp-for="Photo" id="photoInput" type="file" class="form-control"
+                   accept=".jpg,.jpeg,.png" />
+            <span asp-validation-for="Photo" class="text-danger"></span>
+            <div class="form-text">
+                @FileSettings.AllowedExtensionsDisplay &mdash; max @FileSettings.MaxFileSizeDisplay.
+                Leave empty to keep the current photo.
+            </div>
+        </div>
+
+        <div class="col-12 col-md-3 text-center">
+            <img id="photoPreview" src="#" alt="New photo preview" class="rounded-circle"
+                 style="display:none; width:110px; height:110px; object-fit:cover;" />
+        </div>
+    </div>
+
     <footer class="d-flex justify-content-end gap-3 mt-4">
         <a asp-controller="Members" asp-action="Index" class="btn btn-outline-secondary px-4">
             <i class="bi bi-arrow-left me-2"></i> Back to List
@@ -82,4 +124,24 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+    <script>
+        (function () {
+            const input = document.getElementById('photoInput');
+            const preview = document.getElementById('photoPreview');
+            if (!input || !preview) return;
+
+            input.addEventListener('change', function (e) {
+                const file = e.target.files && e.target.files[0];
+                if (!file) {
+                    preview.style.display = 'none';
+                    preview.src = '#';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = ev => { preview.src = ev.target.result; preview.style.display = 'block'; };
+                reader.readAsDataURL(file);
+            });
+        })();
+    </script>
 }

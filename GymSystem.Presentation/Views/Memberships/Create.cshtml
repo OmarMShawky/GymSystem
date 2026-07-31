@@ -1,0 +1,77 @@
+@model CreateMembershipViewModel
+@{
+    ViewBag.Title = "New Membership";
+}
+
+<header class="mb-4 mt-3">
+    <h3 class="text-primary-color">New Membership</h3>
+    <p class="text-muted mb-0">Fields marked <span class="text-danger">*</span> are required.</p>
+</header>
+
+<form method="post" asp-controller="Memberships" asp-action="Create">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="section-header mb-3">
+        <h5 class="text-primary fw-bold"><i class="bi bi-card-checklist me-2"></i>Subscription</h5>
+        <hr class="mt-2">
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="MemberId">Member <span class="text-danger">*</span></label>
+            <select asp-for="MemberId" class="form-select">
+                <option value="">-- Select Member --</option>
+                @foreach (var member in Model.Members)
+                {
+                    <option value="@member.Id">@member.Name</option>
+                }
+            </select>
+            <span asp-validation-for="MemberId" class="text-danger"></span>
+            <div class="form-text">A member can only hold one active membership at a time.</div>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label" asp-for="PlanId">Plan <span class="text-danger">*</span></label>
+            <select asp-for="PlanId" class="form-select">
+                <option value="">-- Select Plan --</option>
+                @foreach (var plan in Model.Plans)
+                {
+                    <option value="@plan.Id">@plan.Name</option>
+                }
+            </select>
+            <span asp-validation-for="PlanId" class="text-danger"></span>
+            <div class="form-text">Only active plans are listed.</div>
+        </div>
+
+        <div class="col-12">
+            <div class="alert alert-light border d-flex align-items-center gap-3 mb-0" role="alert">
+                <i class="bi bi-calendar-range fs-4 text-primary-color"></i>
+                <div>
+                    <div class="fw-bold">The period is calculated for you</div>
+                    <div class="text-muted small">
+                        The membership starts today and ends after the plan's duration &mdash;
+                        no dates to enter.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="d-flex justify-content-end gap-3 mt-4">
+        <a asp-controller="Memberships" asp-action="Index" class="btn btn-outline-secondary px-4">
+            <i class="bi bi-arrow-left me-2"></i>Back to List
+        </a>
+
+        <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-plus-circle me-2"></i>Create
+        </button>
+    </footer>
+</form>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}

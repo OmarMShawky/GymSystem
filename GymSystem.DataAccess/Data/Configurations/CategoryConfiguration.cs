@@ -10,7 +10,6 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
 
         builder.Property(c => c.Description)
                .HasMaxLength(250);
-               
 
         builder.HasQueryFilter(c => !c.IsDeleted);
     }

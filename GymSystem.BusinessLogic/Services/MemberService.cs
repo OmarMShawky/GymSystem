@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 
 namespace GymSystem.BusinessLogic.Services;
 
@@ -31,28 +31,29 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper, IFileService 
         if (emailExists || phoneExists)
             return Result.Conflict("Email or phone already exists.");
 
-        // Validate and store the photo first - a rejected file must not create a member.
         var upload = await _fileService.UploadAsync(
             createMemberViewModel.Photo, FileSettings.MemberPhotosFolder, cancellationToken);
 
         if (upload.IsFailure)
             return Result.Fail(upload.Error!);
 
-        // mapping ==> create CreateMemberViewModel ==> Member entity
-
         var newMember = _mapper.Map<Member>(createMemberViewModel);
 
-        // Only the file name is kept on the member record.
         newMember.Photo = upload.Value;
-
-        // save the new member to the database
 
         memberRepo.Add(newMember, cancellationToken);
 
-        if ((await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0)
-            return Result.Ok();
+        try
+        {
+            if ((await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0)
+                return Result.Ok();
+        }
+        catch
+        {
+            _fileService.DeleteFile(FileSettings.MemberPhotosFolder, upload.Value);
+            throw;
+        }
 
-        // Don't leave the uploaded file orphaned on disk if the insert failed.
         _fileService.DeleteFile(FileSettings.MemberPhotosFolder, upload.Value);
 
         return Result.Fail("The member could not be saved.");
@@ -68,8 +69,6 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper, IFileService 
 
         var memberDetailsViewModel = _mapper.Map<MemberDetailsViewModel>(member);
 
-        // IsActive is a [NotMapped] computed property, so EF can't translate it.
-        // Filter on the mapped EndDate column instead (mirrors Membership.IsActive).
         var today = DateOnly.FromDateTime(DateTime.Now);
         var membership = await _unitOfWork.GetRepository<Membership>()
             .FirstOrDefault(m => m.MemberId == member.Id && m.EndDate > today, cancellationToken);
@@ -106,7 +105,6 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper, IFileService 
         if (record is null)
             return Result.NotFound<HealthRecordViewModel>("This member has no health record.");
 
-        // Age is not stored; derive it at runtime from the member's DateOfBirth.
         var member = await _unitOfWork.GetRepository<Member>()
             .GetByIdAsync(memberId, cancellationToken);
 
@@ -125,7 +123,6 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper, IFileService 
         if (member is null)
             return Result.NotFound("Member not found.");
 
-        // Email/Phone must stay unique across OTHER members.
         var emailExists = await memberRepo
             .AnyAsync(m => m.Id != id && m.Email == editMemberViewModel.Email, cancellationToken);
 
@@ -135,14 +132,56 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper, IFileService 
         if (emailExists || phoneExists)
             return Result.Conflict("Email or phone is already in use by another member.");
 
-        // Maps onto the tracked entity in place, so EF sees the changes.
+        var previousPhoto = member.Photo;
+        string? uploadedPhoto = null;
+
+        if (editMemberViewModel.Photo is { Length: > 0 })
+        {
+            var upload = await _fileService.UploadAsync(
+                editMemberViewModel.Photo, FileSettings.MemberPhotosFolder, cancellationToken);
+
+            if (upload.IsFailure)
+                return Result.Fail(upload.Error!);
+
+            uploadedPhoto = upload.Value;
+        }
+
         _mapper.Map(editMemberViewModel, member);
+
+        if (uploadedPhoto is not null)
+            member.Photo = uploadedPhoto;
 
         memberRepo.Update(member, cancellationToken);
 
-        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
-            ? Result.Ok()
-            : Result.Fail("The member could not be updated.");
+        int saved;
+
+        try
+        {
+            saved = await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+
+            DeletePhotoIfPresent(uploadedPhoto);
+            throw;
+        }
+
+        if (saved <= 0)
+        {
+            DeletePhotoIfPresent(uploadedPhoto);
+            return Result.Fail("The member could not be updated.");
+        }
+
+        if (uploadedPhoto is not null && previousPhoto != uploadedPhoto)
+            DeletePhotoIfPresent(previousPhoto);
+
+        return Result.Ok();
+    }
+
+    private void DeletePhotoIfPresent(string? fileName)
+    {
+        if (!string.IsNullOrWhiteSpace(fileName))
+            _fileService.DeleteFile(FileSettings.MemberPhotosFolder, fileName);
     }
 
     public async Task<Result> DeleteMemberAsync(int id, CancellationToken cancellationToken = default)
@@ -154,14 +193,18 @@ public class MemberService(IUnitOfWork unitOfWork, IMapper mapper, IFileService 
         if (member is null)
             return Result.NotFound("Member not found.");
 
-        // Soft delete: flag the row. The AuditColumnInterceptor stamps DeletedAt,
-        // and the global query filter (!IsDeleted) hides it from future queries.
         member.IsDeleted = true;
+
+        var photoToRemove = member.Photo;
+        member.Photo = null;
 
         memberRepo.Update(member, cancellationToken);
 
-        return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0
-            ? Result.Ok()
-            : Result.Fail("The member could not be deleted.");
+        if ((await _unitOfWork.SaveChangesAsync(cancellationToken)) <= 0)
+            return Result.Fail("The member could not be deleted.");
+
+        DeletePhotoIfPresent(photoToRemove);
+
+        return Result.Ok();
     }
 }

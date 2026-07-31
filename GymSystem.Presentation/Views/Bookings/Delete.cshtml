@@ -1,0 +1,93 @@
+@model BookingDetailsViewModel
+@{
+    ViewBag.Title = "Cancel Booking";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-danger text-white text-center py-4">
+                <i class="bi bi-exclamation-triangle display-5 mb-2"></i>
+                <h3 class="mb-0">Cancel Booking</h3>
+            </div>
+
+            <div class="card-body p-4">
+                @if (ViewBag.Message != null)
+                {
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        @ViewBag.Message
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @if (Model.CanCancel)
+                {
+                    <div class="alert alert-danger d-flex align-items-start gap-3" role="alert">
+                        <i class="bi bi-exclamation-octagon fs-4"></i>
+                        <div>
+                            <strong>This releases the member's spot.</strong>
+                            <div>The slot becomes available for someone else immediately.</div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning d-flex align-items-start gap-3" role="alert">
+                        <i class="bi bi-slash-circle fs-4"></i>
+                        <div>
+                            <strong>This booking can no longer be cancelled.</strong>
+                            <div>The session has already started, so its attendance record must stand.</div>
+                        </div>
+                    </div>
+                }
+
+                <p class="text-muted mb-3">You are about to cancel the following booking:</p>
+
+                <ul class="list-group list-group-flush mb-0">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Member</span>
+                        <strong>@Model.MemberName</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Session</span>
+                        <strong>@Model.SessionName</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Trainer</span>
+                        <strong>@Model.TrainerName</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Starts</span>
+                        <strong>@Model.StartTime</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Session Status</span>
+                        <span class="badge rounded-pill px-3 py-2
+                              @(Model.SessionStatus == SessionStatus.Upcoming ? "bg-primary"
+                                : Model.SessionStatus == SessionStatus.Ongoing ? "bg-success" : "bg-secondary")">
+                            @Model.SessionStatus
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-footer bg-white border-0 p-4">
+                <div class="d-flex justify-content-end gap-3">
+                    <a asp-controller="Bookings" asp-action="Index" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Schedule
+                    </a>
+
+                    @if (Model.CanCancel)
+                    {
+                        <form asp-controller="Bookings" asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger px-4">
+                                <i class="bi bi-trash me-2"></i>Cancel Booking
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

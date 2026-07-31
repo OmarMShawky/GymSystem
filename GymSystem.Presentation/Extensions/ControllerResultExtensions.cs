@@ -1,12 +1,8 @@
-using GymSystem.BusinessLogic.Common;
+﻿using GymSystem.BusinessLogic.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Presentation.Controllers;
 
-/// <summary>
-/// Turns a failed <see cref="Result"/> into the matching HTTP response,
-/// so every controller maps statuses the same way.
-/// </summary>
 public static class ControllerResultExtensions
 {
     public static IActionResult FromFailure(this Controller controller, Result result)

@@ -1,11 +1,11 @@
-using GymSystem.DataAccess.Enums;
+﻿using GymSystem.DataAccess.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace GymSystem.BusinessLogic.ViewModels.Trainers;
 
 public class CreateTrainerViewModel
 {
-    //----- Personal Information -----
+
     [Required(ErrorMessage = "Name is required.")]
     [RegularExpression(@"^[a-zA-Z\s]+$", ErrorMessage = "Name can only contain letters and spaces.")]
     public string Name { get; set; } = null!;
@@ -29,7 +29,6 @@ public class CreateTrainerViewModel
     [EnumDataType(typeof(Gender), ErrorMessage = "Select a gender from the list.")]
     public Gender Gender { get; set; }
 
-    //----- Address Information -----
     [Display(Name = "Building Number")]
     [Required(ErrorMessage = "Building number is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "Building number must be a positive value.")]
@@ -41,12 +40,10 @@ public class CreateTrainerViewModel
     [Required(ErrorMessage = "City is required.")]
     public string City { get; set; } = null!;
 
-    //----- Professional Information -----
     [Display(Name = "Specialty")]
     [Required(ErrorMessage = "Specialty is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "Select a specialty from the list.")]
     public int? CategoryId { get; set; }
 
-    /// <summary>Dropdown data, repopulated by the controller on every render.</summary>
     public IEnumerable<LookupItemViewModel> Categories { get; set; } = [];
 }

@@ -5,5 +5,8 @@ global using GymSystem.BusinessLogic.ViewModels.Members;
 global using GymSystem.BusinessLogic.ViewModels.Plans;
 global using GymSystem.BusinessLogic.ViewModels.Trainers;
 global using GymSystem.BusinessLogic.ViewModels.Sessions;
+global using GymSystem.BusinessLogic.ViewModels.Dashboard;
+global using GymSystem.BusinessLogic.ViewModels.Memberships;
+global using GymSystem.BusinessLogic.ViewModels.Bookings;
 global using GymSystem.DataAccess.Entities;
 global using GymSystem.DataAccess.Contracts;

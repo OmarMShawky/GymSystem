@@ -1,0 +1,92 @@
+@model MembershipDetailsViewModel
+@{
+    ViewBag.Title = "Delete Membership";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-danger text-white text-center py-4">
+                <i class="bi bi-exclamation-triangle display-5 mb-2"></i>
+                <h3 class="mb-0">Delete Membership</h3>
+            </div>
+
+            <div class="card-body p-4">
+                @if (ViewBag.Message != null)
+                {
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        @ViewBag.Message
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @if (Model.IsActive)
+                {
+                    <div class="alert alert-warning d-flex align-items-start gap-3" role="alert">
+                        <i class="bi bi-exclamation-octagon fs-4"></i>
+                        <div>
+                            <strong>This membership is still active.</strong>
+                            <div>
+                                @Model.MemberName has @Model.DaysRemaining day(s) remaining.
+                                Deleting it ends their access immediately and frees them to be
+                                subscribed to a new plan.
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-secondary d-flex align-items-start gap-3" role="alert">
+                        <i class="bi bi-info-circle fs-4"></i>
+                        <div>
+                            <strong>This membership has already expired.</strong>
+                            <div>Removing it only clears it from the list.</div>
+                        </div>
+                    </div>
+                }
+
+                <p class="text-muted mb-3">You are about to delete the following membership:</p>
+
+                <ul class="list-group list-group-flush mb-0">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Member</span>
+                        <strong>@Model.MemberName</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Plan</span>
+                        <strong>@Model.PlanName</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Price</span>
+                        <strong>@Model.Price.ToString("0") EGP</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Period</span>
+                        <strong>@Model.StartDate &rarr; @Model.EndDate</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">Status</span>
+                        <span class="badge rounded-pill px-3 py-2 @(Model.IsActive ? "bg-success" : "bg-secondary")">
+                            @Model.Status
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-footer bg-white border-0 p-4">
+                <div class="d-flex justify-content-end gap-3">
+                    <a asp-controller="Memberships" asp-action="Index" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-arrow-left me-2"></i>Cancel
+                    </a>
+
+                    <form asp-controller="Memberships" asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-trash me-2"></i>Delete Membership
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

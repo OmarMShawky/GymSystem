@@ -1,8 +1,7 @@
-@model SessionDetailsViewModel
+﻿@model SessionDetailsViewModel
 @{
     ViewBag.Title = "Session Details";
 
-    // Same convention as the Index card.
     var headerClass = Model.Status switch
     {
         SessionStatus.Upcoming => "bg-primary",

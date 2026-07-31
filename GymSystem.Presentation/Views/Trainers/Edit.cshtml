@@ -1,4 +1,4 @@
-@model EditTrainerViewModel
+﻿@model EditTrainerViewModel
 @{
     ViewBag.Title = "Edit Trainer";
 }
@@ -24,12 +24,11 @@
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <input type="hidden" asp-for="Id" />
-    @* Locked fields - round-tripped so the banner survives a failed post. *@
+
     <input type="hidden" asp-for="Name" />
     <input type="hidden" asp-for="DateOfBirth" />
     <input type="hidden" asp-for="Gender" />
 
-    <!-- Contact Information -->
     <div class="section-header mb-3">
         <h5 class="text-primary fw-bold"><i class="bi bi-telephone me-2"></i>Contact Information</h5>
         <hr class="mt-2">
@@ -49,7 +48,6 @@
         </div>
     </div>
 
-    <!-- Address Information -->
     <div class="section-header mb-3 mt-4">
         <h5 class="text-primary fw-bold"><i class="bi bi-house me-2"></i>Address Information</h5>
         <hr class="mt-2">
@@ -75,7 +73,6 @@
         </div>
     </div>
 
-    <!-- Professional Information -->
     <div class="section-header mb-3 mt-4">
         <h5 class="text-primary fw-bold"><i class="bi bi-trophy me-2"></i>Professional Information</h5>
         <hr class="mt-2">

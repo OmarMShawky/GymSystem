@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 
 namespace GymSystem.BusinessLogic.Mapping;
 
@@ -6,8 +6,7 @@ public class SessionProfile : Profile
 {
     public SessionProfile()
     {
-        //----- Session -> card -----
-        // Status and Duration are derived from the start/end times at map time.
+
         CreateMap<Session, SessionViewModel>()
             .ForMember(d => d.Specialty, o => o.MapFrom(s =>
                 s.Category != null ? s.Category.Name : s.Name))
@@ -25,7 +24,6 @@ public class SessionProfile : Profile
                 s.SessionMembers != null ? s.SessionMembers.Count : 0))
             .ForMember(d => d.Status, o => o.MapFrom(s => ResolveStatus(s.StartDate, s.EndDate)));
 
-        //----- Session -> details page -----
         CreateMap<Session, SessionDetailsViewModel>()
             .ForMember(d => d.Category, o => o.MapFrom(s =>
                 s.Category != null ? s.Category.Name : s.Name))
@@ -38,22 +36,18 @@ public class SessionProfile : Profile
                 s.SessionMembers != null ? s.SessionMembers.Count : 0))
             .ForMember(d => d.Status, o => o.MapFrom(s => ResolveStatus(s.StartDate, s.EndDate)));
 
-        //----- Session -> edit form (Category and Capacity are locked context) -----
         CreateMap<Session, EditSessionViewModel>()
             .ForMember(d => d.Category, o => o.MapFrom(s =>
                 s.Category != null ? s.Category.Name : s.Name))
             .ForMember(d => d.Status, o => o.MapFrom(s => ResolveStatus(s.StartDate, s.EndDate)))
             .ForMember(d => d.Trainers, o => o.Ignore());
 
-        //----- create form -> new Session -----
-        // The category names the session; there is no Name field on the form.
         CreateMap<CreateSessionViewModel, Session>()
             .ForMember(d => d.Name, o => o.Ignore())
             .ForMember(d => d.Category, o => o.Ignore())
             .ForMember(d => d.Trainer, o => o.Ignore())
             .ForMember(d => d.SessionMembers, o => o.Ignore());
 
-        //----- Category -> dropdown option -----
         CreateMap<Category, LookupItemViewModel>();
     }
 
@@ -67,7 +61,6 @@ public class SessionProfile : Profile
         return now <= end ? SessionStatus.Ongoing : SessionStatus.Completed;
     }
 
-    /// <summary>Long form for the details page, e.g. "1 Hour 30 Minutes".</summary>
     private static string FormatLongDuration(TimeSpan duration)
     {
         if (duration <= TimeSpan.Zero)
@@ -87,7 +80,6 @@ public class SessionProfile : Profile
         return string.Join(" ", parts);
     }
 
-    /// <summary>Short form for the index cards, e.g. "1h 30m".</summary>
     private static string FormatDuration(TimeSpan duration)
     {
         if (duration <= TimeSpan.Zero)

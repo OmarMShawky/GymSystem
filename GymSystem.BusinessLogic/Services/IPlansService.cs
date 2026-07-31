@@ -1,8 +1,8 @@
-namespace GymSystem.BusinessLogic.Services;
+﻿namespace GymSystem.BusinessLogic.Services;
 
 public interface IPlansService
 {
-    // No failure mode - an empty list is a valid result.
+
     Task<IEnumerable<Plan>> PlansAsync(CancellationToken cancellationToken);
 
     Task<Result<Plan>> GetPlanByIdAsync(int id, CancellationToken cancellationToken);

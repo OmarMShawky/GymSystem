@@ -1,12 +1,10 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace GymSystem.BusinessLogic.ViewModels.Sessions;
 
 public class CreateSessionViewModel : IValidatableObject
 {
-    //----- Session Information -----
-    // Nullable so an empty post binds to null and surfaces the [Required] message,
-    // instead of the framework's generic "The value '' is invalid."
+
     [Display(Name = "Category")]
     [Required(ErrorMessage = "Category is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "Select a category from the list.")]
@@ -26,7 +24,6 @@ public class CreateSessionViewModel : IValidatableObject
     [Range(1, 25, ErrorMessage = "Capacity must be between 1 and 25 participants.")]
     public int? Capacity { get; set; }
 
-    //----- Date & Time -----
     [Display(Name = "Start Date & Time")]
     [Required(ErrorMessage = "Start date and time is required.")]
     [DataType(DataType.DateTime)]
@@ -37,7 +34,6 @@ public class CreateSessionViewModel : IValidatableObject
     [DataType(DataType.DateTime)]
     public DateTime? EndDate { get; set; }
 
-    //----- Dropdown data, repopulated by the controller on every render -----
     public IEnumerable<LookupItemViewModel> Categories { get; set; } = [];
     public IEnumerable<LookupItemViewModel> Trainers { get; set; } = [];
 

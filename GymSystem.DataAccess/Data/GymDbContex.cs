@@ -1,6 +1,9 @@
-﻿namespace GymSystem.DataAccess.Data;
+﻿using GymSystem.DataAccess.Entities.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
-public class GymDbContext : DbContext
+namespace GymSystem.DataAccess.Data;
+
+public class GymDbContext : IdentityDbContext<ApplicationUser>
 {
     public GymDbContext(DbContextOptions<GymDbContext> options) : base(options)
     {
@@ -17,7 +20,9 @@ public class GymDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GymDbContext).Assembly);
     }
-
 }

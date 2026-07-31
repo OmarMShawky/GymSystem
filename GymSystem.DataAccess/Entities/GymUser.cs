@@ -15,7 +15,6 @@ public class GymUser : BaseEntity
     public Gender Gender { get; set; }
     public Address Address { get; set; } = null!;
 
-    // Age is derived from DateOfBirth at runtime, never stored in the database.
     [NotMapped]
     public int Age
     {
@@ -27,7 +26,6 @@ public class GymUser : BaseEntity
             var today = DateOnly.FromDateTime(DateTime.Today);
             var age = today.Year - DateOfBirth.Year;
 
-            // Adjust if the birthday hasn't occurred yet this year.
             if (DateOfBirth > today.AddYears(-age))
                 age--;
 

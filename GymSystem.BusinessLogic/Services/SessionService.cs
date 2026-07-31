@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using System.Linq.Expressions;
 
 namespace GymSystem.BusinessLogic.Services;
@@ -35,7 +35,6 @@ public class SessionService(IUnitOfWork unitOfWork, IMapper mapper) : ISessionSe
         createSessionViewModel.Categories =
             _mapper.Map<IEnumerable<LookupItemViewModel>>(categories.OrderBy(c => c.Name));
 
-        // Show the specialty alongside the name so the matching rule is obvious in the UI.
         createSessionViewModel.Trainers = trainers
             .OrderBy(t => t.Name)
             .Select(t => new LookupItemViewModel
@@ -50,7 +49,7 @@ public class SessionService(IUnitOfWork unitOfWork, IMapper mapper) : ISessionSe
     public async Task<Result> CreateSessionAsync(
         CreateSessionViewModel createSessionViewModel, CancellationToken cancellationToken = default)
     {
-        // ModelState validation runs first, so the required values are present here.
+
         var start = createSessionViewModel.StartDate!.Value;
         var end = createSessionViewModel.EndDate!.Value;
 
@@ -66,7 +65,6 @@ public class SessionService(IUnitOfWork unitOfWork, IMapper mapper) : ISessionSe
         if (trainer is null)
             return Result.NotFound("The selected trainer no longer exists.");
 
-        // A Boxing session needs a Boxing trainer.
         if (trainer.CategoryId != category.Id)
             return Result.Fail("The selected trainer's specialty does not match the session category.");
 
@@ -83,7 +81,6 @@ public class SessionService(IUnitOfWork unitOfWork, IMapper mapper) : ISessionSe
 
         var newSession = _mapper.Map<Session>(createSessionViewModel);
 
-        // Session has no name on the form; the category names the session.
         newSession.Name = category.Name;
 
         sessionRepo.Add(newSession, cancellationToken);
@@ -120,7 +117,6 @@ public class SessionService(IUnitOfWork unitOfWork, IMapper mapper) : ISessionSe
         var trainers = await _unitOfWork.GetRepository<Trainer>()
             .GetAllWithIncludesAsync([t => t.Category], cancellationToken: cancellationToken);
 
-        // Show the specialty alongside the name so the matching rule is obvious in the UI.
         editSessionViewModel.Trainers = trainers
             .OrderBy(t => t.Name)
             .Select(t => new LookupItemViewModel
@@ -143,11 +139,9 @@ public class SessionService(IUnitOfWork unitOfWork, IMapper mapper) : ISessionSe
         if (session is null)
             return Result.NotFound("Session not found.");
 
-        // Only Upcoming sessions are mutable - one already running or finished is locked.
         if (ResolveStatus(session.StartDate, session.EndDate) != SessionStatus.Upcoming)
             return Result.Fail("Only upcoming sessions can be edited.");
 
-        // ModelState validation runs first, so the required values are present here.
         var start = editSessionViewModel.StartDate!.Value;
         var end = editSessionViewModel.EndDate!.Value;
 
@@ -157,11 +151,9 @@ public class SessionService(IUnitOfWork unitOfWork, IMapper mapper) : ISessionSe
         if (trainer is null)
             return Result.NotFound("The selected trainer no longer exists.");
 
-        // The category is locked, so the trainer must match the session's existing category.
         if (trainer.CategoryId != session.CategoryId)
             return Result.Fail("The selected trainer's specialty does not match the session category.");
 
-        // No double-booking - excluding this session, which is allowed to overlap itself.
         var isBusy = await sessionRepo
             .AnyAsync(s => s.Id != id
                         && s.TrainerId == trainer.Id
@@ -172,7 +164,6 @@ public class SessionService(IUnitOfWork unitOfWork, IMapper mapper) : ISessionSe
         if (isBusy)
             return Result.Conflict("The trainer already has a session scheduled in that time slot.");
 
-        // Category and Capacity are locked and stay untouched.
         session.TrainerId = trainer.Id;
         session.Description = editSessionViewModel.Description;
         session.StartDate = start;
@@ -194,11 +185,9 @@ public class SessionService(IUnitOfWork unitOfWork, IMapper mapper) : ISessionSe
         if (session is null)
             return Result.NotFound("Session not found.");
 
-        // Members are training right now - refuse to pull the session out from under them.
         if (ResolveStatus(session.StartDate, session.EndDate) == SessionStatus.Ongoing)
             return Result.Conflict("An ongoing session cannot be deleted.");
 
-        // Permanent, hard delete. The Bookings FK cascades, so its bookings go with it.
         sessionRepo.Delete(session, cancellationToken);
 
         return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0

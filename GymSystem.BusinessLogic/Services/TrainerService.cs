@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using System.Linq.Expressions;
 
 namespace GymSystem.BusinessLogic.Services;
@@ -8,7 +8,6 @@ public class TrainerService(IUnitOfWork unitOfWork, IMapper mapper) : ITrainerSe
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IMapper _mapper = mapper;
 
-    // The trainer's specialty is now the linked category's name.
     private static readonly Expression<Func<Trainer, object>>[] _categoryInclude =
     [
         t => t.Category
@@ -41,7 +40,6 @@ public class TrainerService(IUnitOfWork unitOfWork, IMapper mapper) : ITrainerSe
     {
         var trainerRepo = _unitOfWork.GetRepository<Trainer>();
 
-        // Email and phone must be unique across trainers.
         var emailExists = await trainerRepo
             .AnyAsync(t => t.Email == createTrainerViewModel.Email, cancellationToken);
 
@@ -92,7 +90,6 @@ public class TrainerService(IUnitOfWork unitOfWork, IMapper mapper) : ITrainerSe
         if (trainer is null)
             return Result.NotFound("Trainer not found.");
 
-        // Email/Phone must stay unique across OTHER trainers.
         var emailExists = await trainerRepo
             .AnyAsync(t => t.Id != id && t.Email == editTrainerViewModel.Email, cancellationToken);
 
@@ -102,7 +99,6 @@ public class TrainerService(IUnitOfWork unitOfWork, IMapper mapper) : ITrainerSe
         if (emailExists || phoneExists)
             return Result.Conflict("Email or phone is already in use by another trainer.");
 
-        // Maps onto the tracked entity in place; locked fields are ignored by the profile.
         _mapper.Map(editTrainerViewModel, trainer);
 
         trainerRepo.Update(trainer, cancellationToken);
@@ -129,15 +125,12 @@ public class TrainerService(IUnitOfWork unitOfWork, IMapper mapper) : ITrainerSe
         if (trainer is null)
             return Result.NotFound("Trainer not found.");
 
-        // Sessions.TrainerId is a required FK with restrict-on-delete, so ANY session
-        // (past or future) blocks a hard delete - not just scheduled ones.
         var hasAnySession = await _unitOfWork.GetRepository<Session>()
             .AnyAsync(s => s.TrainerId == id, cancellationToken);
 
         if (hasAnySession)
             return Result.Conflict("This trainer has scheduled sessions and cannot be deleted.");
 
-        // Permanent, hard delete - trainers are not soft-deleted.
         trainerRepo.Delete(trainer, cancellationToken);
 
         return (await _unitOfWork.SaveChangesAsync(cancellationToken)) > 0

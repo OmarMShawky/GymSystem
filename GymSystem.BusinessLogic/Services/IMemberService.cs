@@ -1,8 +1,8 @@
-namespace GymSystem.BusinessLogic.Services;
+﻿namespace GymSystem.BusinessLogic.Services;
 
 public interface IMemberService
 {
-    // No failure mode - an empty list is a valid result.
+
     Task<IEnumerable<MemberViewModel>> GetMembersAsync(CancellationToken cancellationToken = default);
 
     Task<Result> CreateMemberAsync(CreateMemberViewModel createMemberViewModel, CancellationToken cancellationToken = default);

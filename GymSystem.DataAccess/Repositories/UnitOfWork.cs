@@ -1,4 +1,4 @@
-using GymSystem.DataAccess.Contracts;
+﻿using GymSystem.DataAccess.Contracts;
 using GymSystem.DataAccess.Data;
 using System.Collections.Concurrent;
 
@@ -17,7 +17,6 @@ public class UnitOfWork : IUnitOfWork
         _repositories[nameof(Member)] = memberRepository;
     }
 
-
     public IGenericRepository<TEntity> GetRepository<TEntity>() where TEntity : BaseEntity
     {
         var entityName = typeof(TEntity).Name;
@@ -29,7 +28,6 @@ public class UnitOfWork : IUnitOfWork
         _repositories.TryAdd(entityName, repo);
         return repo;
     }
-
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => await _context.SaveChangesAsync(cancellationToken);

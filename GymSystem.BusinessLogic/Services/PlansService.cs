@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 
 namespace GymSystem.BusinessLogic.Services;
 
@@ -64,7 +64,6 @@ public class PlansService(IUnitOfWork unitOfWork, IMapper mapper) : IPlansServic
         if (plan is null)
             return Result.NotFound("Plan not found.");
 
-        // An active plan can only be switched off once nobody is still subscribed to it.
         if (plan.IsActive && await HasActiveMembershipsAsync(id, cancellationToken))
             return Result.Conflict("This plan has active memberships and cannot be deactivated.");
 

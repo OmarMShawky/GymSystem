@@ -1,11 +1,18 @@
+using GymSystem.BusinessLogic.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Presentation.Controllers;
 
-public class HomeController : Controller
+[Authorize]
+public class HomeController(IDashboardService dashboardService) : Controller
 {
-    public IActionResult Index()
+    private readonly IDashboardService _dashboardService = dashboardService;
+
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        return View();
+        var dashboard = await _dashboardService.GetDashboardAsync(cancellationToken);
+
+        return View(dashboard);
     }
 }

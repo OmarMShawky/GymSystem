@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 
 namespace GymSystem.BusinessLogic.Services;
@@ -13,7 +13,6 @@ public class FileService(IWebHostEnvironment environment) : IFileService
         if (file is null || file.Length == 0)
             return Result.Fail<string>("Please select a file to upload.");
 
-        // 1. Check the extension.
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
         if (!FileSettings.AllowedExtensions.Contains(extension))
@@ -22,30 +21,24 @@ public class FileService(IWebHostEnvironment environment) : IFileService
                 $"Only {FileSettings.AllowedExtensionsDisplay} files are allowed.");
         }
 
-        // 2. Check the size.
         if (file.Length > FileSettings.MaxFileSizeInBytes)
         {
             return Result.Fail<string>(
                 $"File size must not exceed {FileSettings.MaxFileSizeDisplay}.");
         }
 
-        // 3. Locate the folder, creating it if missing.
         var folderPath = BuildFolderPath(folderName);
         Directory.CreateDirectory(folderPath);
 
-        // 4. Make the name unique so two "photo.png" uploads never collide.
         var uniqueFileName = $"{Guid.NewGuid()}{extension}";
 
-        // 5. Build the full path.
         var filePath = Path.Combine(folderPath, uniqueFileName);
 
-        // 6/7. Copy into the stream. 'await using' closes it even if the copy throws.
         await using (var stream = File.Create(filePath))
         {
             await file.CopyToAsync(stream, cancellationToken);
         }
 
-        // 8. Return the name to store on the entity.
         return uniqueFileName;
     }
 
@@ -82,10 +75,6 @@ public class FileService(IWebHostEnvironment environment) : IFileService
     private string BuildFolderPath(string folderName)
         => Path.Combine(_environment.ContentRootPath, FileSettings.UploadsRootFolder, folderName);
 
-    /// <summary>
-    /// Combines folder and file name, rejecting anything that escapes the uploads root
-    /// (e.g. a stored name containing "../").
-    /// </summary>
     private string? BuildFilePath(string folderName, string fileName)
     {
         var folderPath = BuildFolderPath(folderName);

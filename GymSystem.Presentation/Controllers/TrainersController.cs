@@ -1,10 +1,12 @@
-using GymSystem.BusinessLogic.Common;
+﻿using GymSystem.BusinessLogic.Common;
 using GymSystem.BusinessLogic.Services;
 using GymSystem.BusinessLogic.ViewModels.Trainers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Presentation.Controllers;
 
+[Authorize]
 public class TrainersController(ITrainerService trainerService) : Controller
 {
     private readonly ITrainerService _trainerService = trainerService;
@@ -86,7 +88,6 @@ public class TrainersController(ITrainerService trainerService) : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // Step 1 of delete: show the confirmation page.
     [HttpGet]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
@@ -100,7 +101,6 @@ public class TrainersController(ITrainerService trainerService) : Controller
         return View(result.Value);
     }
 
-    // Step 2 of delete: the confirmed POST performs the permanent delete.
     [HttpPost]
     [ActionName(nameof(Delete))]
     [ValidateAntiForgeryToken]

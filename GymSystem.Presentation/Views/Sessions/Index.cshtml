@@ -1,8 +1,7 @@
-@model IEnumerable<SessionViewModel>
+﻿@model IEnumerable<SessionViewModel>
 @{
     ViewBag.Title = "Sessions";
 
-    // Header colour and badge are both driven by the computed status.
     static string HeaderClass(SessionStatus status) => status switch
     {
         SessionStatus.Upcoming => "bg-primary",

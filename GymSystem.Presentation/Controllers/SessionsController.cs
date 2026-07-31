@@ -1,10 +1,12 @@
-using GymSystem.BusinessLogic.Common;
+﻿using GymSystem.BusinessLogic.Common;
 using GymSystem.BusinessLogic.Services;
 using GymSystem.BusinessLogic.ViewModels.Sessions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Presentation.Controllers;
 
+[Authorize]
 public class SessionsController(ISessionService sessionService) : Controller
 {
     private readonly ISessionService _sessionService = sessionService;
@@ -65,7 +67,6 @@ public class SessionsController(ISessionService sessionService) : Controller
         if (result.IsFailure)
             return this.FromFailure(result);
 
-        // Only Upcoming sessions are mutable - don't even render the form otherwise.
         if (result.Value.Status != SessionStatus.Upcoming)
         {
             TempData["Hello from ViewBag"] = $"An {result.Value.Status} session cannot be edited.";
@@ -98,7 +99,6 @@ public class SessionsController(ISessionService sessionService) : Controller
         return View(await _sessionService.LoadLookupsAsync(editSessionViewModel, cancellationToken));
     }
 
-    // Step 1 of delete: show the confirmation page.
     [HttpGet]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
@@ -112,7 +112,6 @@ public class SessionsController(ISessionService sessionService) : Controller
         return View(result.Value);
     }
 
-    // Step 2 of delete: the confirmed POST performs the permanent delete.
     [HttpPost]
     [ActionName(nameof(Delete))]
     [ValidateAntiForgeryToken]

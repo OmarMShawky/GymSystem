@@ -1,19 +1,18 @@
-using GymSystem.BusinessLogic.Common;
+﻿using GymSystem.BusinessLogic.Common;
 using GymSystem.BusinessLogic.Services;
 using GymSystem.BusinessLogic.ViewModels.Members;
+using GymSystem.DataAccess.Data.Seed;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Presentation.Controllers;
 
+[Authorize(Roles = IdentitySeeder.SuperAdminRole)]
 public class MembersController(IMemberService memberService, IFileService fileService) : Controller
 {
     private readonly IMemberService _memberService = memberService;
     private readonly IFileService _fileService = fileService;
 
-    /// <summary>
-    /// Serves a member photo. Uploads live outside wwwroot, so the browser cannot
-    /// reach them directly - this action reads the file and streams it back.
-    /// </summary>
     [HttpGet]
     public IActionResult Picture(string fileName)
     {
@@ -32,7 +31,6 @@ public class MembersController(IMemberService memberService, IFileService fileSe
         return View(members);
     }
 
-    // create
     [HttpGet]
     public IActionResult Create()
     {

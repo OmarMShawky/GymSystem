@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace GymSystem.BusinessLogic.ViewModels.Sessions;
 
@@ -6,14 +6,11 @@ public class EditSessionViewModel : IValidatableObject
 {
     public int Id { get; set; }
 
-    //----- Locked: shown as read-only context, never posted back -----
     public string Category { get; set; } = null!;
     public int Capacity { get; set; }
 
-    /// <summary>Only Upcoming sessions may be edited.</summary>
     public SessionStatus Status { get; set; }
 
-    //----- Editable -----
     [Display(Name = "Trainer")]
     [Required(ErrorMessage = "Trainer is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "Select a trainer from the list.")]
@@ -33,7 +30,6 @@ public class EditSessionViewModel : IValidatableObject
     [DataType(DataType.DateTime)]
     public DateTime? EndDate { get; set; }
 
-    //----- Dropdown data, repopulated by the controller on every render -----
     public IEnumerable<LookupItemViewModel> Trainers { get; set; } = [];
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
